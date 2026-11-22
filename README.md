@@ -1,3 +1,15 @@
+# FrutiDry — V36 · Diagnóstico de rendimiento por etapas
+
+**Base oficial:** `Atanatus/SHOTERBERKAN`, `main` V35 (`1795c83a4656408065d7670754f507e1dc5d68fc`).
+
+- Se mantiene el mismo render y el mismo estado de simulación. No se almacenan texturas extra ni se introducen dependencias de producción.
+- F3 añade el tiempo **CPU de JavaScript por dibujo** para cinco etapas: escenario, circuitos, núcleo/apuntado, piezas/FX e interfaz. Las medias se actualizan cada segundo y se adjuntan a `perf.sample.renderStagesMs` en los diagnósticos. El valor no es una medición del trabajo de GPU ni equivale a FPS reales.
+- El instrumentado queda deshabilitado sin F3, salvo cinco comprobaciones booleanas por dibujo. Desactivar/activar F3 reinicia los acumuladores.
+- Prueba de regresión: con estado fijo, el Canvas produce exactamente la misma imagen con el perfil activado y desactivado.
+- Auditoría previa en Chromium de prueba a DPR 1: ~0,32 ms de CPU por dibujo en escenas iniciales a 390×844 y 1366×768. Ese valor **no extrapola a otras GPUs ni dispositivos** y no justifica una caché adicional de gran tamaño.
+
+---
+
 # FrutiDry — V35 · Auditoría de colisiones y rendimiento
 
 **Base oficial:** `Atanatus/SHOTERBERKAN`, `main` V34 (`6ffbeef34ccf9740f594f471cd7bce1c94840ddb`).

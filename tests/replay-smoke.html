@@ -14,7 +14,7 @@
 </style>
 </head>
 <body>
-<h1>FrutiDry · Pruebas de motor V35</h1>
+<h1>FrutiDry · Pruebas de motor V36</h1>
 <p class="note">Ejecuta el motor real en un marco aislado. No modifica el repositorio ni guarda resultados permanentes.</p>
 <output id="results">Cargando juego…</output>
 <iframe id="game" src="../index.html" title="Motor bajo prueba"></iframe>
@@ -171,6 +171,40 @@ frame.addEventListener('load',()=>{
       traceComplete:data.recording.complete,last:state.traceCheckpoints.at(-1)?.s,
       limitsOK:state.inputLog.length<=25000&&state.actionLog.length<=15000};
   })()`,r=>r.steps===30000&&r.checkpoints===50&&r.last===30000&&r.traceComplete&&r.limitsOK);
+  verify('Perfil F3 · mismos píxeles, cinco etapas medibles',`(()=>{
+    setTab('play');resetGame(36036);
+    state.shake=0;
+    let fallback=false,originalDrawImage=null;
+    let before,after,stageMs,panel;
+    try {
+      perf.visible=false;draw();
+      try {before=canvas.toDataURL();}
+      catch(e) {
+        // Injected Playwright has a null document origin: images taint the
+        // canvas even when routed from a virtual host. CI HTTP tests the
+        // complete artwork; local fallback compares procedural drawing.
+        if(e.name!=='SecurityError')throw e;
+        fallback=true;originalDrawImage=ctx.drawImage;
+        ctx.drawImage=()=>{};
+        resize();draw();
+        before=canvas.toDataURL();
+      }
+      perf.visible=true;perf.renderStages=Object.create(null);
+      draw();after=canvas.toDataURL();
+      perf.frames=1;perf.steps=1;perf.drawMs=1;perf.drawPeak=1;
+      const now=performance.now();perf.start=now-1100;
+      updatePerfPanel(now);
+      stageMs=perf.sample.renderStagesMs;
+      panel=document.getElementById('debugHud').textContent;
+    } finally {
+      perf.visible=false;
+      if(fallback) {ctx.drawImage=originalDrawImage;resize();}
+    }
+    return {identical:before===after,keys:Object.keys(stageMs),
+      valid:Object.values(stageMs).every(n=>Number.isFinite(n)&&n>=0),
+      panel,fallback,clean:Object.keys(perf.renderStages).length===0};
+  })()`,r=>r.identical&&r.valid&&r.clean&&r.keys.length===5&&
+    r.panel.includes('Escena')&&r.panel.includes('Núcleo'));
   verify('Reloj fijo · 60 Hz y recuperación limitada a cinco pasos',`(()=>{
     resetFrameClock();
     const origin=sampleSimulationClock(1000,true);

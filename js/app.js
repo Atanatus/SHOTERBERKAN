@@ -1,6 +1,6 @@
 // V32: fixed 60 Hz simulation, bounded catch-up and explicit clock resynchronization.
 // No elapsed wall-clock time is replayed after a tab suspension or long stall.
-const perf={visible:new URLSearchParams(location.search).get('debug')==='1',frames:0,steps:0,drawMs:0,drawPeak:0,start:0,fps:0};
+const perf={visible:new URLSearchParams(location.search).get('debug')==='1',frames:0,steps:0,drawMs:0,drawPeak:0,start:0,fps:0,renderStages:Object.create(null),renderStageStart:0};
 const FRAME_TIMING=Object.freeze({stepMs:1000/60,maxSteps:5,stallMs:250});
 const timingStats={stalls:0,droppedMs:0,resyncs:0};
 let lastFrame=null,accumulator=0,lastRender=0;
@@ -90,20 +90,28 @@ function updatePerfPanel(now){
  if(now-perf.start<1000)return;
  const d=(now-perf.start)/1000;
  const dpr=canvas.width/Math.max(1,width);
- perf.sample = {fps:Number((perf.frames/d).toFixed(1)),drawMeanMs:Number((perf.drawMs/Math.max(1,perf.frames)).toFixed(2)),drawPeakMs:Number(perf.drawPeak.toFixed(2)),ticksPerSecond:Number((perf.steps/d).toFixed(1))};
+ const frames=Math.max(1,perf.frames);
+ const renderStagesMs=Object.fromEntries(['scene','conduits','core','pieces','hud'].map(stage=>
+   [stage,Number(((perf.renderStages[stage]||0)/frames).toFixed(3))]));
+ const assets=AssetHealth.summary();
+ perf.sample = {fps:Number((perf.frames/d).toFixed(1)),drawMeanMs:Number((perf.drawMs/frames).toFixed(2)),drawPeakMs:Number(perf.drawPeak.toFixed(2)),ticksPerSecond:Number((perf.steps/d).toFixed(1)),renderStagesMs};
  document.getElementById('debugHud').textContent=[
-  `${GAME_BRAND.name} V35 · ${renderQuality.toUpperCase()} · F3 cerrar`,
+  `${GAME_BRAND.name} V36 · ${renderQuality.toUpperCase()} · F3 cerrar`,
   `FPS render: ${(perf.frames/d).toFixed(1)} / 60`,
   `Render medio: ${(perf.drawMs/Math.max(1,perf.frames)).toFixed(2)} ms`,
   `Render máximo: ${perf.drawPeak.toFixed(2)} ms`,
+  `Escena ${renderStagesMs.scene} · Rutas ${renderStagesMs.conduits} ms`,
+  `Núcleo ${renderStagesMs.core} · Piezas/FX ${renderStagesMs.pieces} ms`,
+  `HUD ${renderStagesMs.hud} ms (CPU por dibujo)`,
   `Simulación: ${(perf.steps/d).toFixed(1)} ticks/s`,
   `Pausas largas: ${timingStats.stalls} · tiempo omitido: ${(timingStats.droppedMs/1000).toFixed(1)} s`,
   `Canvas: ${canvas.width} × ${canvas.height} (${dpr.toFixed(2)}x)`,
   `Partículas: ${state.particles.length} · FX: ${astralBursts.length+lanePulses.length}`,
-  `Gráficos: ${AssetHealth.summary().ready}/${AssetHealth.summary().total} · fallos: ${AssetHealth.summary().failed}`,
+  `Gráficos: ${assets.ready}/${assets.total} · fallos: ${assets.failed}`,
   `Rutas cacheadas: ${routeCache.size}`
  ].join('\n');
  perf.start=now;perf.frames=0;perf.steps=0;perf.drawMs=0;perf.drawPeak=0;
+ perf.renderStages=Object.create(null);
 }
 
 
@@ -239,6 +247,7 @@ document.addEventListener('keydown',event=>{
   if(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName))return;
   event.preventDefault();perf.visible=!perf.visible;debugHud.hidden=!perf.visible;
   perf.start=0;perf.frames=0;perf.steps=0;perf.drawMs=0;perf.drawPeak=0;
+  perf.renderStages=Object.create(null);
 });
 
 resize();

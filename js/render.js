@@ -570,12 +570,22 @@ function drawTetsuPanel(x,y,w,h,highlight=false){
   ctx.restore();
 }
 
+// V36: optional per-stage CPU profiling. Disabled outside F3: no timestamps,
+// frame buffers or additional drawing operations during normal play.
+function markRenderStage(stage) {
+  const now = performance.now();
+  perf.renderStages[stage] = (perf.renderStages[stage] || 0) + now - perf.renderStageStart;
+  perf.renderStageStart = now;
+}
+
 function draw() {
+  if (perf.visible) perf.renderStageStart = performance.now();
   ctx.clearRect(0, 0, width, height);
   ctx.save();
 
   drawTetsuNature();
   drawZenBackground();
+  if (perf.visible) markRenderStage('scene');
 
   if (!REDUCED_MOTION && state.shake > 0.4 && !state.isAiming && !state.projectile) {
     ctx.translate((Math.random() - 0.5) * state.shake, (Math.random() - 0.5) * state.shake);
@@ -586,6 +596,7 @@ function draw() {
   for (let l = 0; l < laneCount; l++) {
     drawRoadwayLane(l, env);
   }
+  if (perf.visible) markRenderStage('conduits');
 
   drawAstralFX();
   drawCoreCeremony();
@@ -596,6 +607,8 @@ function draw() {
   if (!state.projectile && !state.gameOver && !state.chain && state.hitStop===0) {
     drawDirectionalReticle(cx, launchY, getPieceColor(state.nextPiece), state.nextPiece, state.isAiming || keyState.left || keyState.right);
   }
+
+  if (perf.visible) markRenderStage('core');
 
   drawShotTrail();
   drawImpactRings();
@@ -669,6 +682,7 @@ function draw() {
     ctx.fillText(ft.text, ft.x, ft.y);
   }
   ctx.globalAlpha = 1;
+  if (perf.visible) markRenderStage('pieces');
 
   if (!state.projectile && !state.chain) {
     const activeScale = (state.isAiming ? 1.15 : 1) + state.swapAnim * 0.14;
@@ -719,6 +733,7 @@ function draw() {
   ctx.textBaseline="middle";ctx.fillText(statusText, cx, footerY, footerW-36);
 
   ctx.restore();
+  if (perf.visible) markRenderStage('hud');
 }
 
 // V19 — cosmetic feedback. No changes to collision, scoring or simulation time.
