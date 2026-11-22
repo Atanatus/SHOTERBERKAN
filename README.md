@@ -289,3 +289,12 @@ El diseño técnico, la separación servidor/cliente, los riesgos legales y la e
 - Documentos: [`docs/REUNION_SOCIOS_TORNEOS_2026-11-22.md`](docs/REUNION_SOCIOS_TORNEOS_2026-11-22.md) y [`docs/OPERATIVA_TORNEOS_DESARROLLADORES.md`](docs/OPERATIVA_TORNEOS_DESARROLLADORES.md).
 - Pruebas del dominio: `node --test tests/tournament-operations.test.mjs`, añadidas a GitHub Actions.
 - Estado: **preparación interna solamente**. Para abrir torneos reales siguen faltando cuentas, backend, partidas servidor-autoritativas, registro legal, validación antifraude, autorizaciones y conciliación de PayPal.
+
+
+## V46 · Diagnósticos completos reproducidos en Node (sin premios)
+
+- `server/headless-replay.mjs`: ejecutor headless que reutiliza el juego V45 trusted, sin render, para reconstruir disparos, puntuación, fusiones y game over; no hay rutas online ni concesión de XP.
+- `tests/headless-replay.test.mjs` y dos capturas congeladas de Chromium comprueban 151 y 820 pasos, incluida divergencia temprana de checkpoints y falsificaciones de puntuación/inputs.
+- `scripts/verify-diagnostic.mjs` permite inspección local especificando la semilla esperada, nunca tomada como verdad de los metadatos del cliente.
+- **Seguridad:** un replay consistente puede automatizarse y no es prueba antifraude; `node:vm` no es frontera de aislamiento. El viewport del modo competitivo, el verificador aislado, la integración operativa, el ledger idempotente de XP y el cumplimiento legal siguen pendientes.
+- Procedimiento, comandos y barreras: `docs/HEADLESS_REPLAY_V46.md`.
