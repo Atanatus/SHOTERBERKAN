@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static integrity checks for KŌSEN · BERKAN. Python standard library only.
+"""Static integrity checks for FrutiDry (Astral Sanctuary). Python standard library only.
 
 Use: python tests/validate_repo.py
 Requires Node.js on PATH for JavaScript syntax checking; game runtime does not.
@@ -66,8 +66,17 @@ for name, expected in entries.items():
         fail(f"Formato WebP inválido: {name}")
 
 html_path = ROOT / "index.html"
+html = html_path.read_text(encoding="utf-8")
+if '<title>FrutiDry — Astral Sanctuary' not in html or '<span class="brand">FrutiDry ' not in html:
+    fail('La identidad oficial FrutiDry no coincide entre título y cabecera')
+if 'aria-label="Tablero de FrutiDry.' not in html:
+    fail('El nombre accesible del tablero no coincide con FrutiDry')
+# Never break imports of progress or diagnostics created under the previous public name.
+continuity_source = (ROOT / 'js/continuity.js').read_text(encoding='utf-8')
+if "'kosen-berkan-progress'" not in continuity_source or "'kosen-berkan-run-diagnostic'" not in continuity_source:
+    fail('Se ha alterado un formato histórico de progreso o diagnóstico')
 parser = LocalReferences()
-parser.feed(html_path.read_text(encoding="utf-8"))
+parser.feed(html)
 for name in parser.links:
     if not (ROOT / name).is_file():
         fail(f"Archivo referenciado desde HTML no encontrado: {name}")

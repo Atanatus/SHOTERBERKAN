@@ -1,4 +1,6 @@
 
+// Identidad visible. No se modifican los identificadores de guardado ni los formatos V24.
+const GAME_BRAND = Object.freeze({name:'FrutiDry',universe:'Astral Sanctuary',core:'BERKAN'});
 const BACKGROUND_PHOTO_URL = '';
 const REDUCED_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const STORE = {get(key,fallback){try{return JSON.parse(localStorage.getItem(key)) ?? fallback}catch{return fallback}},set(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch{}}};

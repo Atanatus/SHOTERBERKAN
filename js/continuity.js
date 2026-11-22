@@ -143,12 +143,12 @@ const ContinuityLab = (() => {
       else data = lastCompletedRun ?? STORE.get('kosen_v23_last_run',null) ?? captureRun();
       // Digest is a tamper-detection aid for transport, NOT an anti-cheat verification.
       try {data.payloadSha256 = await sha256(JSON.stringify(data));} catch {data.hashUnavailable = true;}
-      downloadJSON('kosen-berkan-diagnostico-'+Date.now()+'.json',data);
+      downloadJSON('frutidry-diagnostico-'+Date.now()+'.json',data);
       feedback('Diagnóstico preparado. Incluye semilla, entradas, estado y resolución; no certifica la puntuación.');
     } catch (error) { feedback('Error al exportar diagnóstico: '+error.message,true); }
   }
   document.getElementById('btnExportProgress').addEventListener('click',()=>{
-    try {downloadJSON('kosen-berkan-progreso-'+new Date().toISOString().slice(0,10)+'.json',createBackup());feedback('Copia de progreso preparada: conserva el JSON en un lugar seguro.');}
+    try {downloadJSON('frutidry-progreso-'+new Date().toISOString().slice(0,10)+'.json',createBackup());feedback('Copia de progreso preparada: conserva el JSON en un lugar seguro.');}
     catch(error){feedback('No se pudo exportar: '+error.message,true);}
   });
   document.getElementById('btnImportProgress').addEventListener('click',()=>input.click());

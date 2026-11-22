@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""KŌSEN browser regression tests (test-only Playwright dependency).
+"""FrutiDry browser regression tests (test-only Playwright dependency).
 
 Normal/CI: python tests/browser_qa.py
 Restricted environments that block browser navigation:
@@ -52,16 +52,16 @@ def resource_route(route):
 
 
 def injected_game(page):
-    page.route('https://kosen.test/**', resource_route)
+    page.route('https://frutidry.test/**', resource_route)
     original = (ROOT / 'index.html').read_text(encoding='utf-8')
-    markup = original.replace('<head>', '<head><base href="https://kosen.test/">' + SHIM, 1)
+    markup = original.replace('<head>', '<head><base href="https://frutidry.test/">' + SHIM, 1)
     page.set_content(markup, wait_until='load')
 
 
 def run(smoke_only=False, injected=False):
     errors = []
     browser_kwargs = {'headless': True, 'args': ['--disable-dev-shm-usage', '--no-sandbox']}
-    chrome = os.environ.get('KOSEN_CHROME')
+    chrome = os.environ.get('FRUTIDRY_CHROME') or os.environ.get('KOSEN_CHROME')
     if not chrome and injected:
         chrome = shutil.which('chromium') or shutil.which('google-chrome')
     if chrome:
@@ -83,11 +83,11 @@ def run(smoke_only=False, injected=False):
                 page = context.new_page()
                 page.on('pageerror', lambda error: errors.append(str(error)))
                 if injected:
-                    page.route('https://kosen.test/**', resource_route)
+                    page.route('https://frutidry.test/**', resource_route)
                     smoke = (ROOT/'tests/replay-smoke.html').read_text(encoding='utf-8')
                     page.set_content(smoke.replace('src="../index.html"', ''), wait_until='load')
                     game = (ROOT/'index.html').read_text(encoding='utf-8')
-                    game = game.replace('<head>', '<head><base href="https://kosen.test/">'+SHIM, 1)
+                    game = game.replace('<head>', '<head><base href="https://frutidry.test/">'+SHIM, 1)
                     page.evaluate('(html) => { document.getElementById("game").srcdoc=html; }', game)
                 else:
                     page.goto(f'{origin}/tests/replay-smoke.html', wait_until='load')
@@ -116,10 +116,11 @@ def run(smoke_only=False, injected=False):
                       return {canvas:c.width>0&&c.height>0,paused:isPaused,resumed,
                         shots:state.shotCount-before,seed:state.seed,
                         hud:!!document.getElementById('scoreVal').textContent,
+                        brand:GAME_BRAND.name==='FrutiDry'&&document.title.startsWith('FrutiDry')&&document.querySelector('.brand')?.textContent.includes('FrutiDry'),
                         cards:document.querySelectorAll('#relicGrid .relic-card').length};
                     }''')
                     assert details['canvas'] and details['paused'] and details['resumed'], (w,h,details)
-                    assert details['shots']==1 and details['hud'] and details['cards']==12,(w,h,details)
+                    assert details['shots']==1 and details['hud'] and details['brand'] and details['cards']==12,(w,h,details)
                     assert not errors,(w,h,errors)
                     print(f'OK: viewport {w}×{h} · disparo / Códice / 12 reliquias',flush=True)
                     if (w,h)==(390,844):

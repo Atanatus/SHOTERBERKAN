@@ -1,4 +1,14 @@
-# KŌSEN · BERKAN — V27 · Browser QA
+# FrutiDry — Astral Sanctuary · V28
+
+## Identidad oficial · V28
+
+**FrutiDry** es el nombre oficial del videojuego desde V28. **Astral Sanctuary** permanece como universo artístico y **BERKAN** como el núcleo ceremonial, el Códice y sus reliquias. El nombre anterior **KŌSEN · BERKAN** se conserva únicamente como referencia histórica.
+
+**Compatibilidad:** este cambio es de identidad, no de reglas. Se mantienen las claves `kosen_*` de `localStorage`, los formatos JSON `kosen-berkan-progress` y `kosen-berkan-run-diagnostic`, los números de esquema y la versión de reglas 20. No se migran ni se borran partidas guardadas; únicamente los nombres de los nuevos archivos exportados pasan a `frutidry-*.json`.
+
+El repositorio sigue siendo `Atanatus/SHOTERBERKAN` para no romper su URL, historial o GitHub Pages. No cambiar la URL del repositorio sin planificar redirecciones y validaciones. El nombre comercial está decidido para el proyecto, **pero la disponibilidad registral no está certificada**.
+
+**CI V28:** GitHub Actions utiliza `ubuntu-24.04` en lugar de la imagen `ubuntu-latest` que se actualizó a Ubuntu 26.04 e impidió instalar el Chromium de Playwright 1.56.0. El resultado de esta corrección debe confirmarse en GitHub tras publicarla.
 
 ## Inicio (Windows)
 
@@ -31,7 +41,7 @@ Sin dependencias: scripts clásicos `defer` ordenados `config`, `audio`, `data`,
 
 ## Repositorio oficial
 
-El código oficial vive en **https://github.com/Atanatus/SHOTERBERKAN**, rama `main`. No reinicialices un nuevo Git ni uses ZIP antiguos como fuente. Trabaja sobre un clon actualizado del repositorio. Los parches de QA deben aplicarse únicamente sobre la revisión para la que se generaron. No subas archivos locales de progreso ni diagnósticos.
+El código oficial de FrutiDry vive en **https://github.com/Atanatus/SHOTERBERKAN**, rama `main`. No reinicialices un nuevo Git ni uses ZIP antiguos como fuente. Trabaja sobre un clon actualizado del repositorio. Los parches de QA deben aplicarse únicamente sobre la revisión para la que se generaron. No subas archivos locales de progreso ni diagnósticos.
 
 El repositorio es público. Conviene revisar la titularidad y los derechos de explotación de las ilustraciones y del nombre antes de promocionarlo comercialmente.
 
@@ -80,3 +90,10 @@ python tests/browser_qa.py
 En un entorno con política que impide abrir `localhost` o `file://` desde Chromium, se puede ejecutar `python tests/browser_qa.py --injected`. Este modo sustituye `localStorage` por memoria temporal y, por tanto, **no certifica persistencia entre recargas**. La CI de GitHub utiliza navegación HTTP real y falla si no supera esas pruebas.
 
 **Operativa Git:** valida el resultado de GitHub Actions después de publicar; un parche preparado no equivale a un commit remoto.
+
+## V28 · Cambio de identidad y corrección de CI
+
+- Identidad visible, título del navegador, metadatos y nombres de descarga: **FrutiDry**.
+- Arte, mecánicas, núcleo BERKAN, 12 reliquias y claves de datos históricos: intactos.
+- Pruebas de marca añadidas a validación estática y QA de navegador.
+- Runner GitHub Actions fijado a Ubuntu 24.04 para compatibilidad con Chromium de Playwright 1.56.0.

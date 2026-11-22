@@ -28,7 +28,7 @@ function updatePerfPanel(now){
  const dpr=canvas.width/Math.max(1,width);
  perf.sample = {fps:Number((perf.frames/d).toFixed(1)),drawMeanMs:Number((perf.drawMs/Math.max(1,perf.frames)).toFixed(2)),drawPeakMs:Number(perf.drawPeak.toFixed(2)),ticksPerSecond:Number((perf.steps/d).toFixed(1))};
  document.getElementById('debugHud').textContent=[
-  `V24 · ${renderQuality.toUpperCase()} · F3 cerrar`,
+  `${GAME_BRAND.name} V28 · ${renderQuality.toUpperCase()} · F3 cerrar`,
   `FPS render: ${(perf.frames/d).toFixed(1)} / 60`,
   `Render medio: ${(perf.drawMs/Math.max(1,perf.frames)).toFixed(2)} ms`,
   `Render máximo: ${perf.drawPeak.toFixed(2)} ms`,
@@ -43,7 +43,7 @@ function updatePerfPanel(now){
 
 function updateHUD() {
   const env = ZEN_ENVIRONMENTS[state.envIndex % ZEN_ENVIRONMENTS.length];
-  document.getElementById('envLabel').textContent = `Kōsen · ${env.name}`;
+  document.getElementById('envLabel').textContent = `${GAME_BRAND.name} · ${env.name}`;
   document.getElementById('scoreVal').textContent = state.score.toLocaleString();
   const bestEl = document.getElementById('bestVal');
   if (bestEl) bestEl.textContent = state.best.toLocaleString();

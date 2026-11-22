@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>KŌSEN · BERKAN — V27 · Browser QA</title>
+<title>FrutiDry — Astral Sanctuary · V28</title>
+<meta name="description" content="FrutiDry es un arcade de fusiones, frutas y cristales en Astral Sanctuary. Descubre las doce reliquias del Códice BERKAN.">
+<meta name="theme-color" content="#071122">
+<meta property="og:type" content="website">
+<meta property="og:title" content="FrutiDry — Astral Sanctuary">
+<meta property="og:description" content="Dispara, fusiona y descubre las doce reliquias del Códice BERKAN.">
 <link rel="preload" as="image" href="assets/background/santuario-vertical.webp" media="(max-aspect-ratio: 1/1)">
 <link rel="preload" as="image" href="assets/background/santuario-panoramico.webp" media="(min-aspect-ratio: 1/1)">
 <link rel="stylesheet" href="css/style.css">
@@ -12,7 +17,7 @@
 
 <header>
   <div class="stat-box">
-    <span class="brand">KŌSEN · BERKAN <small>光線 / V27</small></span><span class="stat-label" id="envLabel">Kōsen · Aurora Prisma</span>
+    <span class="brand">FrutiDry <small>ASTRAL SANCTUARY · V28</small></span><span class="stat-label" id="envLabel">FrutiDry · Aurora Prisma</span>
     <span class="stat-val" id="scoreVal">0</span>
     <div class="record-sub">
       <span>★ RÉCORD V20:</span>
@@ -50,7 +55,7 @@
   <div id="comboHud"><div class="combo-title">RESONANCIA</div><div class="combo-number" id="v2ComboNumber">×1</div><div class="combo-tier" id="v2ComboTier">LISTO</div><div class="combo-bar"><div class="combo-fill" id="v2ComboFill"></div></div></div><div id="toast" role="status">★ ¡HITO ALCANZADO!</div>
   <div id="practiceIndicator" hidden>LABORATORIO · SIN RÉCORD</div>
   <div id="debugHud" hidden aria-live="off"></div>
-  <canvas id="gameCanvas" aria-label="Tablero de juego Kōsen. Arrastra para apuntar y suelta para disparar."></canvas>
+  <canvas id="gameCanvas" aria-label="Tablero de FrutiDry. Arrastra para apuntar y suelta para disparar."></canvas>
 
   <div id="gameover">
     <div style="font-size: 12.5px; color: var(--sakura); font-weight: 900; letter-spacing: 2.5px;" id="goReason">SELLO INTERRUMPIDO</div>
@@ -104,7 +109,7 @@
     </section>
     <div class="grid" id="relicGrid"></div><p id="legacyRecord" style="font-size:11px;color:var(--muted);margin-top:12px"></p>
     <div style="margin-top: 18px; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 14px; border: 1px solid var(--border);">
-      <div style="font-size: 10px; font-weight: 800; color: var(--gold); margin-bottom: 6px; letter-spacing: 0.8px;">GUÍA RÁPIDA · BERKAN, FRUTAS & RIESGO</div>
+      <div style="font-size: 10px; font-weight: 800; color: var(--gold); margin-bottom: 6px; letter-spacing: 0.8px;">GUÍA FRUTIDRY · BERKAN, FRUTAS & RIESGO</div>
       <div style="font-size: 10.5px; color: var(--muted); line-height: 1.5;">
         • <b>Núcleo BERKAN:</b> Centro táctico del circuito; al alcanzar nivel 10 se materializa para detonarlo colando un disparo.<br>
         • <b>Frutas objetivo y proyectil (🍒 · 🍋 · 🍓 · 🍊):</b> Aparecen tanto en el circuito como en tu disparo; fusiona frutas iguales o encájalas en huecos.<br>
