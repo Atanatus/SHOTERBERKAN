@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KŌSEN · Pruebas de reproducción</title>
+<style>
+  :root{color-scheme:dark;font:16px system-ui}
+  body{max-width:800px;margin:3rem auto;padding:0 1rem;background:#0c1323;color:#e3f2ff}
+  h1{font-size:1.3rem}
+  output{display:block;white-space:pre-wrap;line-height:1.8;border:1px solid #456;border-radius:10px;padding:1rem;background:#111b32}
+  iframe{position:absolute;left:-9999px;top:0;width:390px;height:844px;border:0}
+  .note{color:#a5bfcd;font-size:.9rem}
+</style>
+</head>
+<body>
+<h1>KŌSEN · Pruebas de reproducción V25</h1>
+<p class="note">Ejecuta el motor real en un marco aislado. No modifica el repositorio ni guarda resultados permanentes.</p>
+<output id="results">Cargando juego…</output>
+<iframe id="game" src="../index.html" title="Motor bajo prueba"></iframe>
+<script>
+'use strict';
+const frame=document.getElementById('game');
+const output=document.getElementById('results');
+frame.addEventListener('load',()=>{
+  const outcomes=[];
+  const verify=(title,script,accept)=>{
+    try{
+      const result=frame.contentWindow.eval(script);
+      if(!accept(result))throw Error(JSON.stringify(result));
+      outcomes.push(`✓ ${title}`);
+    }catch(e){outcomes.push(`✕ ${title}: ${e.message}`);}
+    output.textContent=outcomes.join('\n');
+  };
+  verify('Reproducción exacta de 275 pasos',`(()=>{
+    setTab('play');resetGame(24681357);
+    for(let i=0;i<30;i++)update();
+    state.aimAngle=.238734123;state.isAiming=true;
+    for(let i=0;i<17;i++)update();
+    state.isAiming=false;shoot();
+    for(let i=0;i<85;i++)update();
+    swapActiveAndUpcoming();
+    for(let i=0;i<18;i++)update();
+    state.aimAngle=-.14397365;shoot();
+    for(let i=0;i<125;i++)update();
+    const trace=ContinuityLab.captureRun();
+    ReplayLab.begin(trace);
+    for(let i=0;i<trace.stats.simFrame&&state.replayActive;i++){
+      update();ReplayLab.afterStep();
+    }
+    return {steps:trace.stats.simFrame,
+      matches:JSON.stringify(ReplayLab.snapshot())===JSON.stringify(trace.checkpoint),
+      status:document.getElementById('replayStatus').textContent};
+  })()`,r=>r.steps===275&&r.matches&&r.status.includes('VERIFICADO'));
+  verify('Final prematuro detectado',`(()=>{
+    setTab('play');resetGame(1977);for(let i=0;i<10;i++)update();
+    const data=ContinuityLab.captureRun();ReplayLab.begin(data);
+    state.gameOver=true;ReplayLab.afterStep();
+    return {active:state.replayActive,applying:ReplayLab.isApplying(),
+      status:document.getElementById('replayStatus').textContent,
+      visible:document.getElementById('auditHash').textContent};
+  })()`,r=>!r.active&&!r.applying&&r.status.includes('partida terminada')&&r.visible.includes('partida terminada'));
+  verify('La excepción no deja abierto el permiso de acción',`(()=>{
+    setTab('play');resetGame(3759);state.aimAngle=.15;shoot();
+    for(let i=0;i<45;i++)update();
+    const data=ContinuityLab.captureRun();ReplayLab.begin(data);
+    const original=window.shoot;
+    try{window.shoot=()=>{throw Error('excepción de prueba')};update();}
+    finally{window.shoot=original;}
+    return {active:state.replayActive,applying:ReplayLab.isApplying(),
+      status:document.getElementById('replayStatus').textContent};
+  })()`,r=>!r.active&&!r.applying&&r.status.includes('excepción de prueba'));
+  output.textContent=outcomes.join('\n')+'\n\n'+(outcomes.every(x=>x.startsWith('✓'))?'TODAS LAS PRUEBAS SUPERADAS':'HAY PRUEBAS FALLIDAS');
+});
+</script>
+</body>
+</html>

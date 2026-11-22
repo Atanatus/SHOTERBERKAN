@@ -55,8 +55,15 @@ const ReplayLab = (() => {
   function stop(message,bad){
     trace=null;applying=false;state.replayActive=false;state.replayData=null;
     clearInput();status(message,bad);
-    // Keep the laboratory seed in force: if the player resumes, rewards remain disabled.
-    setTab('vault');
+    // A replay may finish at game-over. In that case the game-over overlay sits
+    // above the Codex, so surface the verification result on the visible overlay.
+    if(state.gameOver){
+      const result=document.getElementById('auditHash');
+      if(result)result.textContent=message;
+    }else{
+      // Keep the laboratory seed in force: resumed play must not grant rewards.
+      setTab('vault');
+    }
   }
   function beforeStep(){
     if(!state.replayActive){
@@ -73,9 +80,13 @@ const ReplayLab = (() => {
         const a=trace.actions[actionAt++];
         const before=state.actionLog.length;
         applying=true;
-        if(a.a==='swap')swapActiveAndUpcoming();
-        else{state.aimAngle=a.angleExact;shoot();}
-        applying=false;
+        try{
+          if(a.a==='swap')swapActiveAndUpcoming();
+          else{state.aimAngle=a.angleExact;shoot();}
+        }finally{
+          // Never leave the replay-only action gate open after an exception.
+          applying=false;
+        }
         if(state.actionLog.length!==before+1)throw Error(`Acción rechazada en paso ${state.simFrame}`);
         const made=state.actionLog[before];
         if(made.l!==a.l||made.k!==a.k||made.f!==a.f||made.m!==a.m||Math.abs(made.p-a.p)>.0002)throw Error(`Divergencia de munición/circuito en paso ${state.simFrame}`);
@@ -88,6 +99,12 @@ const ReplayLab = (() => {
   }
   function afterStep(){
     if(!state.replayActive||!trace)return;
+    // The main loop stops advancing when game-over occurs. Without this check
+    // a replay that terminates before its checkpoint remains stuck forever.
+    if(state.gameOver && state.simFrame<trace.stats.simFrame){
+      stop(`✕ REPLAY DIVERGENTE · partida terminada en paso ${state.simFrame}/${trace.stats.simFrame}`,true);
+      return;
+    }
     if(state.simFrame<trace.stats.simFrame)return;
     const actual=snapshot(),expected=trace.checkpoint;
     // Only semantic state is compared; particle positions and audio are intentionally omitted.

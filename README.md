@@ -50,3 +50,12 @@ No hace falta modificar la URL salvo que cambies el repositorio. No subas archiv
 * Los ficheros V23 de diagnóstico (schema 1) no son reproducibles; siguen siendo exportables como referencia histórica.
 * La misma implementación de JS y física es imprescindible; no hay estabilidad garantizada entre futuras reglas o motores.
 * En caso de divergencia, el motor detiene la reproducción y señala el fallo; no altera los datos persistidos.
+
+## V25 · Endurecimiento del laboratorio de reproducción
+
+- El laboratorio detecta un `gameOver` anterior al checkpoint y termina con un diagnóstico explícito en lugar de quedar esperando indefinidamente.
+- El permiso temporal para aplicar acciones del replay se desactiva incluso si una acción lanza una excepción.
+- Si un replay termina en la pantalla de fin de partida, muestra allí el resultado del verificador, evitando que el Códice quede oculto debajo.
+- Prueba autocontenida del motor: abre `tests/replay-smoke.html` y comprueba que aparecen tres resultados correctos.
+
+Se mantienen las reglas V20 y el formato de diagnóstico V24. Esta corrección **no convierte el registro local en una prueba antitrampas**.
