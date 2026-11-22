@@ -1,3 +1,10 @@
+# FrutiDry V45 · Transiciones de partida compartidas (fase 3; premios y XP desactivados)
+
+- `js/simulation-core.js` comparte ahora las mutaciones de curación, aceleración/ralentización, encaje, supercharger, fusiones y combos, daño por fallo, puntuación de núcleo y búsqueda de fusiones encadenadas.
+- `js/game.js` utiliza esas mismas transiciones en lugar de tener su propia copia de las reglas. Canvas, efectos, sonido y almacenamiento permanecen en el navegador.
+- `tests/simulation-stage3.test.mjs` compara resultados y mutaciones contra fórmulas congeladas de V44, incluidos límites de niveles, combos y escudos. Las pruebas de replay siguen sin cambiar la semántica de `rulesVersion: 20`.
+- **No es un verificador de partidas completo:** todavía faltan resolución íntegra de proyectiles, impactos especiales y bucle de simulación en Node.js, junto con restricciones temporales/antifraude y liquidación atómica. Los diagnósticos recibidos continúan como `PENDING_INDEPENDENT_VERIFICATION`, XP 0, ranking inactivo y PayPal desactivado.
+
 # FrutiDry V44 · Extracción determinista (fase 2; sin XP ni puntuación certificada)
 
 - El mismo `js/simulation-core.js` ahora implementa criterios de fusión, generación de munición, intersección y avance de proyectiles (rebotes e impactos), además de PRNG y circuitos de V43.

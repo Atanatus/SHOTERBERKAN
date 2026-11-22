@@ -597,14 +597,13 @@ function shoot() {
 
 function applyHealImpact(x, y) {
   spawnDopamineBurst(x, y, THEME.emerald, 1.2);
-  if (state.shieldIntegrity < MAX_SHIELD) {
-    state.shieldIntegrity++;
+  const heal = FrutiDrySimulation.applyHealImpact(state, MAX_SHIELD);
+  if (heal.healed) {
     AudioEngine.playHeal();
     addFloatingText(x, y - 18, '+1 VIDA', THEME.emerald, true);
     showToast('♥ ESCUDO RESTAURADO (+1 VIDA)');
   } else {
-    const bonus = 150;
-    state.score += bonus;
+    const bonus = heal.points;
     AudioEngine.playLock();
     addFloatingText(x, y - 18, `VITALIDAD MAX +${bonus}`, THEME.emerald, false);
     checkMilestoneProgress();
@@ -659,10 +658,7 @@ function detonateCenterFigure(projLevel) {
 
   ensureTargetFruitsOnBoard(2);
 
-  const bonusMult = 1;
-  const pts = Math.round((2500 + projLevel * 250) * bonusMult);
-  state.score += pts;
-  state.centerLevel = null;
+  const pts = FrutiDrySimulation.applyCoreDetonation(state, projLevel);
   state.coreScaleAnim = 1.85;
   state.corePulseBoost = 1;
   state.hitStop = 6;
@@ -706,10 +702,7 @@ function applySuperchargerImpact(slotIndex, proj, impactX, impactY) {
   const tag = 'SUPERCHARGER ↑';
 
   if (slot === null) {
-    const startLvl = Math.max(2, proj.level + 1);
-    state.slots[slotIndex] = { level: startLvl, kind: 'normal', fruit: null, isBomb: false, isSkull: false, isSuperballNode: false, scaleAnim: 1.65 };
-    const pts = startLvl * 45;
-    state.score += pts;
+    const {level:startLvl, points:pts} = FrutiDrySimulation.applySuperchargerPlacement(state, slotIndex, proj.level);
     spawnDopamineBurst(impactX, impactY, color, 1.45);
     addFloatingText(impactX, impactY - 20, `${tag} NV.${startLvl} +${pts}`, color, true);
     AudioEngine.playMerge(startLvl, state.combo + 1);
@@ -754,9 +747,7 @@ function resolveSlotImpact(slotIndex, proj, impactX, impactY) {
   }
 
   if (proj.kind === 'accel') {
-    state.tempoMult = 1.45;
-    state.tempoTimer = 360;
-    state.score += 60;
+    FrutiDrySimulation.applyTempoImpact(state, 'accel');
     AudioEngine.playTempoShift(true);
     spawnDopamineBurst(impactX, impactY, THEME.accel, 1.25);
     addAstralFX("wave",impactX,impactY,slotRadius*4,.44,.45,1);
@@ -768,9 +759,7 @@ function resolveSlotImpact(slotIndex, proj, impactX, impactY) {
   }
 
   if (proj.kind === 'slow') {
-    state.tempoMult = 0.55;
-    state.tempoTimer = 300;
-    state.score += 60;
+    FrutiDrySimulation.applyTempoImpact(state, 'slow');
     AudioEngine.playTempoShift(false);
     spawnDopamineBurst(impactX, impactY, THEME.slow, 1.25);
     addAstralFX("vortex",impactX,impactY,slotRadius*4,.45,.5,1);
@@ -791,18 +780,7 @@ function resolveSlotImpact(slotIndex, proj, impactX, impactY) {
   const safeFruit = isFruitProj ? (proj.fruit ? { ...proj.fruit } : { ...FRUITS[0] }) : null;
 
   if (slot === null) {
-    state.slots[slotIndex] = {
-      level: projLevel,
-      kind: isFruitProj ? 'fruit' : 'normal',
-      fruit: safeFruit,
-      isBomb: false,
-      isSkull: false,
-      isSuperballNode: false,
-      scaleAnim: 1.45
-    };
-    state.combo = 0;
-    const pts = projLevel * 15;
-    state.score += pts;
+    const pts = FrutiDrySimulation.applyPiecePlacement(state, slotIndex, projLevel, isFruitProj, safeFruit);
     AudioEngine.playLock();
     const color = getPieceColor(proj);
     spawnParticles(pos.x, pos.y, color, 10);
@@ -821,8 +799,7 @@ function resolveSlotImpact(slotIndex, proj, impactX, impactY) {
     return;
   }
 
-  state.combo = 0;
-  state.shieldIntegrity--;
+  FrutiDrySimulation.applyFailedImpact(state);
   state.shake = 14;
   AudioEngine.playReject();
   spawnParticles(impactX, impactY, THEME.danger, 18);
@@ -847,15 +824,13 @@ function resolveSlotImpact(slotIndex, proj, impactX, impactY) {
 }
 
 function triggerChainMerge(centerIndex, newLevel, prefixLabel = '') {
-  newLevel=Math.min(TARGET_CORE_LEVEL,newLevel);
-  state.combo++; state.bestCombo=Math.max(state.bestCombo,state.combo);
-  const mergedNode={level:newLevel,kind:'normal',fruit:null,scaleAnim:1.65};
-  state.slots[centerIndex]=mergedNode;
+  const merge = FrutiDrySimulation.applyChainMerge(state, centerIndex, newLevel, TARGET_CORE_LEVEL);
+  newLevel = merge.level;
+  const pts = merge.points;
+  const mergedNode = state.slots[centerIndex];
   const pos=getSlotWorldPos(centerIndex), color=getPieceColor(mergedNode);
   startMergeFX(centerIndex,newLevel,color);
-  const basePts=Math.round(Math.pow(1.65,newLevel)*22*Math.min(state.combo,8))+(state.combo>=3?25*Math.min(state.combo,8):0);
-  const pts=Math.round(basePts*(state.shotTempoBonus?1.4:1));
-  state.score+=pts; state.hitStop=REDUCED_MOTION?0:3; state.shake=REDUCED_MOTION?0:Math.min(3+newLevel+state.combo,13);
+  state.hitStop=REDUCED_MOTION?0:3; state.shake=REDUCED_MOTION?0:Math.min(3+newLevel+state.combo,13);
   state.corePulseBoost=.7;
   emitLanePulse(getSlotLane(centerIndex),pos.x,color,state.combo>=3?1.15:.8);
   spawnDopamineBurst(pos.x,pos.y,color,Math.min(1.8,1+state.combo*.12));
@@ -864,10 +839,7 @@ function triggerChainMerge(centerIndex, newLevel, prefixLabel = '') {
   addFloatingText(pos.x,pos.y-22,`${prefixLabel?prefixLabel+' · ':''}+${pts}${state.combo>1?' · ×'+state.combo:''}${state.shotTempoBonus?' · RÁFAGA':''}`,color,true);
   AudioEngine.playMerge(newLevel,state.combo);checkRelicUnlock(newLevel);
   if(newLevel<TARGET_CORE_LEVEL){
-    const lanes=state.routeParams.laneCount;
-    const neighbors=Array.from({length:NUM_SLOTS},(_,i)=>i).filter(i=>i%lanes===centerIndex%lanes);
-    const at=neighbors.indexOf(centerIndex);
-    const other=[neighbors[(at-1+neighbors.length)%neighbors.length],neighbors[(at+1)%neighbors.length]].find(i=>i!==centerIndex&&arePiecesEqualForMerge(state.slots[i],mergedNode));
+    const other=FrutiDrySimulation.findChainNeighbor(state.slots,centerIndex,state.routeParams.laneCount,NUM_SLOTS);
     if(other!==undefined){state.slots[other]=null;state.chain={index:centerIndex,level:newLevel+1,delay:7};updateHUD();return;}
   }
   state.chain=null;checkLevel10Spawn();checkMilestoneProgress();ensureTargetFruitsOnBoard(2);updateHUD();
@@ -990,7 +962,7 @@ function update() {
       if(hit.type==='slot')resolveSlotImpact(hit.index,p,p.x,p.y);
       else if(p.kind==='heal')applyHealImpact(p.x,p.y);
       else if(hit.type==='core')detonateCenterFigure(p.level);
-      else{state.shieldIntegrity--;state.combo=0;state.shake=10;AudioEngine.playReject();addFloatingText(p.x,p.y+18,'DESVIADO',THEME.danger);updateHUD();if(state.shieldIntegrity<=0)triggerGameOver('ESCUDO FRACTURADO');}
+      else{FrutiDrySimulation.applyFailedImpact(state);state.shake=10;AudioEngine.playReject();addFloatingText(p.x,p.y+18,'DESVIADO',THEME.danger);updateHUD();if(state.shieldIntegrity<=0)triggerGameOver('ESCUDO FRACTURADO');}
       finishShotFX(p,hit,state.shieldIntegrity<oldLives||state.gameOver, state.score>oldScore);
       if(!state.gameOver && state.superCooldown>0 && state.lastSuperShot!==state.shotCount)advanceSpecialCooldown();
     }

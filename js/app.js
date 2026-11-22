@@ -96,7 +96,7 @@ function updatePerfPanel(now){
  const assets=AssetHealth.summary();
  perf.sample = {fps:Number((perf.frames/d).toFixed(1)),drawMeanMs:Number((perf.drawMs/frames).toFixed(2)),drawPeakMs:Number(perf.drawPeak.toFixed(2)),ticksPerSecond:Number((perf.steps/d).toFixed(1)),renderStagesMs};
  document.getElementById('debugHud').textContent=[
-  `${GAME_BRAND.name} V37 · ${renderQuality.toUpperCase()} · F3 cerrar`,
+  `${GAME_BRAND.name} V45 · ${renderQuality.toUpperCase()} · F3 cerrar`,
   `FPS render: ${(perf.frames/d).toFixed(1)} / 60`,
   `Render medio: ${(perf.drawMs/Math.max(1,perf.frames)).toFixed(2)} ms`,
   `Render máximo: ${perf.drawPeak.toFixed(2)} ms`,

@@ -159,6 +159,81 @@
    return null;
   }
 
+  // V45 deterministic state transitions. Visuals, storage and audio stay in game.js.
+  // These are trusted simulation primitives, not proof that an uploaded run is genuine.
+  function applyHealImpact(state, maxShield = 5) {
+    if (state.shieldIntegrity < maxShield) {
+      state.shieldIntegrity++;
+      return {healed: true, points: 0};
+    }
+    const points = 150;
+    state.score += points;
+    return {healed: false, points};
+  }
+
+  function applyTempoImpact(state, kind) {
+    if (kind === 'accel') {state.tempoMult = 1.45; state.tempoTimer = 360;}
+    else if (kind === 'slow') {state.tempoMult = 0.55; state.tempoTimer = 300;}
+    else throw new RangeError('Unknown tempo impact');
+    state.score += 60;
+    return 60;
+  }
+
+  function applySuperchargerPlacement(state, index, projectileLevel) {
+    const level = Math.max(2, projectileLevel + 1);
+    state.slots[index] = {level, kind: 'normal', fruit: null, isBomb: false,
+      isSkull: false, isSuperballNode: false, scaleAnim: 1.65};
+    const points = level * 45;
+    state.score += points;
+    return {level, points};
+  }
+
+  function applyPiecePlacement(state, index, projectileLevel, isFruit, safeFruit) {
+    state.slots[index] = {level: projectileLevel, kind: isFruit ? 'fruit' : 'normal',
+      fruit: safeFruit, isBomb: false, isSkull: false, isSuperballNode: false, scaleAnim: 1.45};
+    state.combo = 0;
+    const points = projectileLevel * 15;
+    state.score += points;
+    return points;
+  }
+
+  function applyFailedImpact(state) {
+    state.combo = 0;
+    state.shieldIntegrity--;
+    return state.shieldIntegrity;
+  }
+
+  function applyCoreDetonation(state, projectileLevel) {
+    const bonusMult = 1;
+    const points = Math.round((2500 + projectileLevel * 250) * bonusMult);
+    state.score += points;
+    state.centerLevel = null;
+    return points;
+  }
+
+  function applyChainMerge(state, index, newLevel, targetCoreLevel = 10) {
+    const level = Math.min(targetCoreLevel, newLevel);
+    state.combo++;
+    state.bestCombo = Math.max(state.bestCombo, state.combo);
+    state.slots[index] = {level, kind: 'normal', fruit: null, scaleAnim: 1.65};
+    const basePts = Math.round(Math.pow(1.65, level) * 22 * Math.min(state.combo, 8)) +
+      (state.combo >= 3 ? 25 * Math.min(state.combo, 8) : 0);
+    const points = Math.round(basePts * (state.shotTempoBonus ? 1.4 : 1));
+    state.score += points;
+    return {level, points};
+  }
+
+  function findChainNeighbor(slots, centerIndex, laneCount, numSlots = 9) {
+    const neighbors = Array.from({length: numSlots}, (_, i) => i).filter(i => i % laneCount === centerIndex % laneCount);
+    const at = neighbors.indexOf(centerIndex);
+    const mergedNode = slots[centerIndex];
+    return [neighbors[(at - 1 + neighbors.length) % neighbors.length],
+      neighbors[(at + 1) % neighbors.length]]
+      .find(i => i !== centerIndex && arePiecesEqualForMerge(slots[i], mergedNode));
+  }
+
   return {createPRNG, generateProceduralRoute, getLaneOffsetY, evalLaneAt, getSlotWorldPos,
-    isBoardFigure, isTargetFruit, arePiecesEqualForMerge, getHighestBoardLevel, nextRandomPiece, intersection, advanceProjectile};
+    isBoardFigure, isTargetFruit, arePiecesEqualForMerge, getHighestBoardLevel, nextRandomPiece, intersection, advanceProjectile,
+    applyHealImpact, applyTempoImpact, applySuperchargerPlacement, applyPiecePlacement,
+    applyFailedImpact, applyCoreDetonation, applyChainMerge, findChainNeighbor};
 });

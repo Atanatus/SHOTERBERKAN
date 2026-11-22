@@ -31,6 +31,8 @@ jobs:
         run: node --test tests/run-intake.test.mjs
       - name: Deterministic projectile and ammunition parity against V43
         run: node --test tests/simulation-stage2.test.mjs
+      - name: Shared scoring, damage and fusion parity against V44
+        run: node --test tests/simulation-stage3.test.mjs
       - name: Web account contract and API transport tests
         run: node --test tests/account-client.test.mjs
 
