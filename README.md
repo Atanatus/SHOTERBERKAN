@@ -216,3 +216,13 @@ En un entorno con política que impide abrir `localhost` o `file://` desde Chrom
 Se añade una sección **TORNEO** con calendario próximo (viernes-domingo-lunes, `Europe/Madrid`), podio vacío y requisitos previstos. **No existe todavía torneo activo ni premio anunciado**: no hay cuentas, niveles permanentes, ranking online o pagos. El reloj solo muestra fechas orientativas; no determina la apertura de competiciones.
 
 El diseño técnico, la separación servidor/cliente, los riesgos legales y la estrategia de anuncios display están documentados en [`docs/TOURNAMENTS_AND_ADS.md`](docs/TOURNAMENTS_AND_ADS.md). No se ha añadido ninguna solicitud publicitaria ni cambiado el motor de juego. Pruebas puras de horario y reglas: `node --test tests/tournament.test.mjs`.
+
+
+## V38 · PayPal Payouts (contrato seguro, sin dinero activo)
+
+- Medio de entrega propuesto: **PayPal Payouts**, tres pagos individuales en EUR, con destinatario por email validado. **No se ha solicitado acceso al servicio ni se envían fondos.**
+- `server/paypal-payouts.mjs` solo produce un borrador inerte para uso futuro en un backend autenticado; no contiene red, credenciales ni botón de pago. Valida aprobación, fondo, usuarios 11+, identidad, residencia, puesto y revisión de las tres posiciones.
+- `sender_batch_id` estable por edición y `sender_item_id` estable por premiado. Huella privada de la instantánea del pago para impedir reenvíos con datos distintos; requerirá un registro duradero y único en MongoDB antes de activar la API.
+- Cada premio se concilia por estado propio: `SUCCESS` significa abonado; `PENDING`, `UNCLAIMED` y `ONHOLD` no significan cobrado; errores o reversos requieren revisión. Un lote `SUCCESS` nunca autoriza por sí solo marcar los tres premios como pagados.
+- La interfaz indica que PayPal es un método previsto, no operativo; no solicita correos ni cambia el juego. **La elegibilidad y los flags de autorización solo podrán provenir de fuentes verificadas en servidor**, nunca del navegador.
+- Documentación: [`docs/PAYPAL_PAYOUTS.md`](docs/PAYPAL_PAYOUTS.md). Pruebas: `node --test tests/paypal-payouts.test.mjs`.
