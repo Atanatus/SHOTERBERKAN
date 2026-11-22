@@ -1,4 +1,4 @@
-# KŌSEN · BERKAN — V24 · Deterministic Engine
+# KŌSEN · BERKAN — V26 · Stability Lab
 
 ## Inicio (Windows)
 
@@ -29,19 +29,11 @@ Sin dependencias: scripts clásicos `defer` ordenados `config`, `audio`, `data`,
 
 **Importante:** No se incluye restauración automática de la partida en curso; las copias JSON son únicamente del progreso permanente y las preferencias. La exportación de diagnóstico es para QA y no prueba que un récord sea legítimo.
 
-## GitHub: primera subida
+## Repositorio oficial
 
-Repositorio de destino: **https://github.com/Atanatus/SHOTERBERKAN**. Comprobado el 22 de noviembre de 2026: existe, está vacío y es **público**. Recomiendo hacerlo privado antes del primer `push` si todavía no están cerrados los derechos de explotación. Desde PowerShell, situado en esta carpeta:
+El código oficial vive en **https://github.com/Atanatus/SHOTERBERKAN**, rama `main`. No reinicialices un nuevo Git ni uses ZIP antiguos como fuente. Trabaja sobre un clon actualizado del repositorio. Los parches de QA deben aplicarse únicamente sobre la revisión para la que se generaron. No subas archivos locales de progreso ni diagnósticos.
 
-```powershell
-git init -b main
-git add .
-git commit -m "feat: Kosen Berkan V24 deterministic replay and QA"
-git remote add origin https://github.com/Atanatus/SHOTERBERKAN.git
-git push -u origin main
-```
-
-No hace falta modificar la URL salvo que cambies el repositorio. No subas archivos de trabajo ni copias privadas de progreso. Comprueba la titularidad y derechos sobre las ilustraciones antes de publicar el repositorio.
+El repositorio es público. Conviene revisar la titularidad y los derechos de explotación de las ilustraciones y del nombre antes de promocionarlo comercialmente.
 
 ## Limitaciones de reproducción
 
@@ -59,3 +51,11 @@ No hace falta modificar la URL salvo que cambies el repositorio. No subas archiv
 - Prueba autocontenida del motor: abre `tests/replay-smoke.html` y comprueba que aparecen tres resultados correctos.
 
 Se mantienen las reglas V20 y el formato de diagnóstico V24. Esta corrección **no convierte el registro local en una prueba antitrampas**.
+
+## V26 · Estabilidad y control de calidad
+
+- Corregido el inicio de una segunda partida con entradas de puntería iguales a las de la anterior: el registrador reinicia su línea base con cada ritual. No cambia la física ni las reglas V20.
+- Si se modifica el tamaño lógico del tablero durante una reproducción, se detiene y se explica la incompatibilidad. Se conserva el formato de diagnóstico V24 (schema 2).
+- Las cinco pruebas del laboratorio se pueden ejecutar abriendo `tests/replay-smoke.html` en un navegador local.
+- `python tests/validate_repo.py` comprueba los 59 WebP contra su manifiesto SHA-256, referencias de HTML y sintaxis de los JS con Node disponible en PATH. No utiliza dependencias de Python de terceros.
+- `.github/workflows/qa.yml` ejecuta las comprobaciones estáticas en pushes y pull requests; no demuestra por sí solo que el juego sea jugable en todas las plataformas.

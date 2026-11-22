@@ -14,7 +14,7 @@
 </style>
 </head>
 <body>
-<h1>KŌSEN · Pruebas de reproducción V25</h1>
+<h1>KŌSEN · Pruebas de reproducción V26</h1>
 <p class="note">Ejecuta el motor real en un marco aislado. No modifica el repositorio ni guarda resultados permanentes.</p>
 <output id="results">Cargando juego…</output>
 <iframe id="game" src="../index.html" title="Motor bajo prueba"></iframe>
@@ -70,6 +70,30 @@ frame.addEventListener('load',()=>{
     return {active:state.replayActive,applying:ReplayLab.isApplying(),
       status:document.getElementById('replayStatus').textContent};
   })()`,r=>!r.active&&!r.applying&&r.status.includes('excepción de prueba'));
+  verify('Primer input registrado tras reiniciar ritual',`(()=>{
+    setTab('play');resetGame(1234);
+    state.aimAngle=.2;state.isAiming=true;
+    for(let i=0;i<12;i++)update();
+    resetGame(1234);
+    state.aimAngle=.2;state.isAiming=true;
+    for(let i=0;i<12;i++)update();
+    const data=ContinuityLab.captureRun();
+    ReplayLab.begin(data);
+    for(let i=0;i<data.stats.simFrame&&state.replayActive;i++){
+      update();ReplayLab.afterStep();
+    }
+    return {first:data.inputs[0],status:document.getElementById('replayStatus').textContent};
+  })()`,r=>r.first?.s===0&&r.first.v[1]===1&&r.status.includes('VERIFICADO'));
+  verify('Cambio de viewport detiene el replay',`(()=>{
+    setTab('play');resetGame(2345);
+    for(let i=0;i<12;i++)update();
+    const data=ContinuityLab.captureRun();
+    ReplayLab.begin(data);
+    const oldWidth=width;
+    try {width+=1;update();}
+    finally {width=oldWidth;}
+    return {active:state.replayActive,status:document.getElementById('replayStatus').textContent};
+  })()`,r=>!r.active&&r.status.includes('tamaño del tablero modificado'));
   output.textContent=outcomes.join('\n')+'\n\n'+(outcomes.every(x=>x.startsWith('✓'))?'TODAS LAS PRUEBAS SUPERADAS':'HAY PRUEBAS FALLIDAS');
 });
 </script>

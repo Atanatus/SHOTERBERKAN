@@ -6,6 +6,9 @@ const ReplayLab = (() => {
   let trace=null, actionAt=0, inputAt=0, applying=false, lastInput=null;
   const MAX_STEPS=60*60*60; // one hour of simulation; guard against unbounded uploads
   function isApplying(){return applying;}
+  // Each ritual owns its own input-delta baseline. Without this, a repeated
+  // initial input can be omitted when starting a second ritual in the same tab.
+  function resetRecording(){lastInput=null;}
   function status(message,bad=false){output.textContent=message;output.dataset.error=String(bad);}
   function piece(p){if(!p)return null;return [p.level??0,p.kind??'normal',p.fruit?.id??null,Number(!!p.isBomb),Number(!!p.isSkull),Number(!!p.isSuperballNode)];}
   function snapshot(){return {
@@ -74,6 +77,12 @@ const ReplayLab = (() => {
       return;
     }
     if(!trace)return;
+    // Resizing changes lane geometry and projectile physics: stop rather than
+    // continuing with an invalid viewport and reporting a misleading result.
+    if(width!==trace.viewport.width||height!==trace.viewport.height){
+      stop(`✕ REPLAY DETENIDO · tamaño del tablero modificado (${width}×${height})`,true);
+      return false;
+    }
     try {
       // The input events were accepted between simulation steps, in their original order.
       while(actionAt<trace.actions.length && trace.actions[actionAt].s===state.simFrame){
@@ -99,6 +108,10 @@ const ReplayLab = (() => {
   }
   function afterStep(){
     if(!state.replayActive||!trace)return;
+    if(width!==trace.viewport.width||height!==trace.viewport.height){
+      stop(`✕ REPLAY DETENIDO · tamaño del tablero modificado (${width}×${height})`,true);
+      return;
+    }
     // The main loop stops advancing when game-over occurs. Without this check
     // a replay that terminates before its checkpoint remains stuck forever.
     if(state.gameOver && state.simFrame<trace.stats.simFrame){
@@ -122,5 +135,5 @@ const ReplayLab = (() => {
     finally{fileInput.value='';}
   });
   document.getElementById('btnImportReplay').addEventListener('click',()=>fileInput.click());
-  return{snapshot,input,beforeStep,afterStep,begin,validate,isApplying};
+  return{snapshot,input,beforeStep,afterStep,begin,validate,isApplying,resetRecording};
 })();
