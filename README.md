@@ -1,4 +1,4 @@
-# FrutiDry — V36 · Diagnóstico de rendimiento por etapas
+# FrutiDry — V37 · Torneos semanales (fase preparatoria)
 
 **Base oficial:** `Atanatus/SHOTERBERKAN`, `main` V35 (`1795c83a4656408065d7670754f507e1dc5d68fc`).
 
@@ -209,3 +209,10 @@ En un entorno con política que impide abrir `localhost` o `file://` desde Chrom
 - El verificador compara cada checkpoint en orden y detiene la reproducción en el **primer paso divergente conocido**, sin esperar a terminar toda la partida. Este resultado **no es una prueba antitrampas**.
 - Máximo de **360 checkpoints** por partida en el registro local (una hora de simulación); no altera los límites de importación existentes.
 - El laboratorio incorpora pruebas de detección de una divergencia intermedia, compatibilidad histórica y rechazo de checkpoints desordenados.
+
+
+## V37 · Torneos y monetización (fase preparatoria)
+
+Se añade una sección **TORNEO** con calendario próximo (viernes-domingo-lunes, `Europe/Madrid`), podio vacío y requisitos previstos. **No existe todavía torneo activo ni premio anunciado**: no hay cuentas, niveles permanentes, ranking online o pagos. El reloj solo muestra fechas orientativas; no determina la apertura de competiciones.
+
+El diseño técnico, la separación servidor/cliente, los riesgos legales y la estrategia de anuncios display están documentados en [`docs/TOURNAMENTS_AND_ADS.md`](docs/TOURNAMENTS_AND_ADS.md). No se ha añadido ninguna solicitud publicitaria ni cambiado el motor de juego. Pruebas puras de horario y reglas: `node --test tests/tournament.test.mjs`.

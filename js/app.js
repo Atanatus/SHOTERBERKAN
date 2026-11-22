@@ -96,7 +96,7 @@ function updatePerfPanel(now){
  const assets=AssetHealth.summary();
  perf.sample = {fps:Number((perf.frames/d).toFixed(1)),drawMeanMs:Number((perf.drawMs/frames).toFixed(2)),drawPeakMs:Number(perf.drawPeak.toFixed(2)),ticksPerSecond:Number((perf.steps/d).toFixed(1)),renderStagesMs};
  document.getElementById('debugHud').textContent=[
-  `${GAME_BRAND.name} V36 · ${renderQuality.toUpperCase()} · F3 cerrar`,
+  `${GAME_BRAND.name} V37 · ${renderQuality.toUpperCase()} · F3 cerrar`,
   `FPS render: ${(perf.frames/d).toFixed(1)} / 60`,
   `Render medio: ${(perf.drawMs/Math.max(1,perf.frames)).toFixed(2)} ms`,
   `Render máximo: ${perf.drawPeak.toFixed(2)} ms`,
@@ -163,18 +163,29 @@ function renderVault() {
 
 function setTab(tab) {
   if (tab==='play' && FaultBoundary.active()) return;
-  const modal = document.getElementById('vaultModal');
-  const btnPlay = document.getElementById('btnPlay');
-  const btnVault = document.getElementById('btnVault');
-  if (tab === 'vault') {
-    resetFrameClock();
-    paused=true;clearInput();renderVault(); modal.classList.add('open');
-    btnVault.classList.add('active'); btnPlay.classList.remove('active');
+  const vault=document.getElementById('vaultModal');
+  const tourney=document.getElementById('tournamentModal');
+  const btnPlay=document.getElementById('btnPlay');
+  const btnVault=document.getElementById('btnVault');
+  const btnTournament=document.getElementById('btnTournament');
+  resetFrameClock();
+  if(tab==='vault'||tab==='tournament') {
+    paused=true;clearInput();
+    if(tab==='vault')renderVault();
+    else if(typeof TournamentPreview==='undefined') {
+      document.getElementById('tournamentStatus').textContent='CALENDARIO NO DISPONIBLE · RECARGA LA PÁGINA';
+    } else TournamentPreview.refresh();
   } else {
-    resetFrameClock();
-    paused=false;modal.classList.remove('open');if(document.activeElement instanceof HTMLButtonElement)document.activeElement.blur();
-    btnPlay.classList.add('active'); btnVault.classList.remove('active');
+    paused=false;
+    if(document.activeElement instanceof HTMLButtonElement)document.activeElement.blur();
   }
+  vault.classList.toggle('open',tab==='vault');
+  vault.setAttribute('aria-hidden',String(tab!=='vault'));
+  tourney.classList.toggle('open',tab==='tournament');
+  tourney.setAttribute('aria-hidden',String(tab!=='tournament'));
+  btnPlay.classList.toggle('active',tab==='play');
+  btnVault.classList.toggle('active',tab==='vault');
+  btnTournament.classList.toggle('active',tab==='tournament');
 }
 
 

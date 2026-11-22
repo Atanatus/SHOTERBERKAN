@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>FrutiDry — Astral Sanctuary · V36</title>
+<title>FrutiDry — Astral Sanctuary · V37</title>
 <meta name="description" content="FrutiDry es un arcade de fusiones, frutas y cristales en Astral Sanctuary. Descubre las doce reliquias del Códice BERKAN.">
 <meta name="theme-color" content="#071122">
 <meta property="og:type" content="website">
@@ -36,7 +36,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 <header>
   <div class="stat-box">
-    <span class="brand">FrutiDry <small>ASTRAL SANCTUARY · V36</small></span><span class="stat-label" id="envLabel">FrutiDry · Aurora Prisma</span>
+    <span class="brand">FrutiDry <small>ASTRAL SANCTUARY · V37</small></span><span class="stat-label" id="envLabel">FrutiDry · Aurora Prisma</span>
     <span class="stat-val" id="scoreVal">0</span>
     <div class="record-sub">
       <span>★ RÉCORD V20:</span>
@@ -51,6 +51,7 @@ window.addEventListener('DOMContentLoaded', () => {
   <nav><button class="tab-btn" id="btnMute" aria-label="Silenciar sonido" aria-pressed="false">♪</button>
     <button class="tab-btn active" id="btnPlay" onclick="setTab('play')">SELLO</button>
     <button class="tab-btn" id="btnVault" onclick="setTab('vault')">CÓDICE (<span id="vaultCount">0</span>/12)</button>
+    <button class="tab-btn" id="btnTournament" type="button" onclick="setTab('tournament')">TORNEO</button>
   </nav>
 </header>
 
@@ -108,6 +109,40 @@ window.addEventListener('DOMContentLoaded', () => {
     <button class="tab-btn diag-gameover" id="btnDownloadRun" type="button">↓ EXPORTAR DIAGNÓSTICO</button>
   </div>
 
+  <section class="modal tournament-modal" id="tournamentModal" aria-labelledby="tournamentHeading" aria-hidden="true">
+    <div class="modal-header">
+      <div class="modal-title" id="tournamentHeading">FRUTIDRY · TORNEO SEMANAL</div>
+      <button class="tab-btn" type="button" onclick="setTab('play')">CERRAR</button>
+    </div>
+    <div class="tournament-notice" id="tournamentStatus" role="status">EN PREPARACIÓN · SIN TORNEO ACTIVO</div>
+    <p class="tournament-intro">Estamos construyendo la competición con premios en metálico. Las fechas son orientativas: <strong>todavía no hay inscripciones, clasificación oficial ni premios anunciados</strong>.</p>
+    <div class="tournament-schedule" aria-label="Calendario previsto de la próxima edición">
+      <div><span>APERTURA · VIERNES</span><strong id="tournamentStart">—</strong></div>
+      <div><span>CIERRE · DOMINGO</span><strong id="tournamentEnd">—</strong></div>
+      <div><span>PAGOS · LUNES</span><strong id="tournamentPayout">—</strong></div>
+    </div>
+    <p class="tournament-zone">Calendario de referencia: <span id="tournamentTimezone">Europe/Madrid</span>. El reparto del lunes estará sujeto a comprobaciones de seguridad y obligaciones legales.</p>
+    <div class="tournament-panel">
+      <h2>CLASIFICACIÓN SEMANAL</h2>
+      <p>Se contará la mejor partida <strong>verificada por el servidor</strong> de cada participante. No cuentan los récords locales ni los archivos JSON enviados por el navegador.</p>
+      <table class="tournament-table">
+        <caption>Sin resultados oficiales todavía</caption>
+        <thead><tr><th scope="col">Posición</th><th scope="col">Jugador</th><th scope="col">Puntos</th><th scope="col">Premio</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">1.º</th><td>—</td><td>—</td><td>Por definir</td></tr>
+          <tr><th scope="row">2.º</th><td>—</td><td>—</td><td>Por definir</td></tr>
+          <tr><th scope="row">3.º</th><td>—</td><td>—</td><td>Por definir</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <aside class="ad-placement" id="adTournamentSlot" data-ad-slot="tournament" aria-label="Publicidad" hidden></aside>
+    <div class="tournament-rules">
+      <h2>CONDICIONES PREVISTAS</h2>
+      <p>Acceso a partir de <strong>nivel de cuenta 11</strong>, que será una progresión permanente independiente del nivel de las gemas. Participación gratuita, sin compras ni anuncios obligatorios. La competición con dinero se restringirá inicialmente a adultos, previa verificación legal y de identidad de los ganadores.</p>
+      <p>Los importes se publicarán y financiarán antes de cada torneo. Los desempates, límites de intentos, ámbito territorial y tratamiento fiscal se fijarán en las bases oficiales.</p>
+    </div>
+    <div class="tournament-footer">FRUTIDRY · DISEÑO EN DESARROLLO · NO SE ESTÁN ACEPTANDO PARTICIPACIONES</div>
+  </section>
   <div class="modal" id="vaultModal">
     <div class="modal-header">
       <div class="modal-title">CÓDICE BERKAN · GEOMETRÍA VIVA</div>
@@ -145,7 +180,8 @@ window.addEventListener('DOMContentLoaded', () => {
       <output id="replayStatus" class="data-status" role="status" aria-live="polite">Reproducción: inactiva.</output>
       <output id="dataStatus" class="data-status" role="status" aria-live="polite">Tus datos permanecen en este dispositivo hasta que los exportes.</output>
     </section>
-    <div class="grid" id="relicGrid"></div><p id="legacyRecord" style="font-size:11px;color:var(--muted);margin-top:12px"></p>
+    <div class="grid" id="relicGrid"></div>
+    <aside class="ad-placement" id="adCodexSlot" data-ad-slot="codex" aria-label="Publicidad" hidden></aside><p id="legacyRecord" style="font-size:11px;color:var(--muted);margin-top:12px"></p>
     <div style="margin-top: 18px; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 14px; border: 1px solid var(--border);">
       <div style="font-size: 10px; font-weight: 800; color: var(--gold); margin-bottom: 6px; letter-spacing: 0.8px;">GUÍA FRUTIDRY · BERKAN, FRUTAS & RIESGO</div>
       <div style="font-size: 10.5px; color: var(--muted); line-height: 1.5;">
@@ -172,5 +208,6 @@ window.addEventListener('DOMContentLoaded', () => {
 <script defer src="js/app.js"></script>
 <script defer src="js/continuity.js"></script>
 <script defer src="js/replay.js"></script>
+<script defer src="js/tournament.js"></script>
 </body>
 </html>

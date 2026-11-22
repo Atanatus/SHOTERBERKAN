@@ -478,3 +478,43 @@ button.tab-btn,.btn-primary,#btnVault:not(.active),button.tab-btn.active,#gameov
  background:var(--button-art) center/100% 100% no-repeat,linear-gradient(150deg,#203c5d,#121329 70%,#412e63)}
 #levelBadge,#livesBadge{border:1px solid #d8af69;border-image:var(--tetsu-frame) 95 220 / 15px 35px stretch}
 @media(max-width:620px){#assetNotice{font-size:10px}#assetNotice button{font-size:10px}}
+
+/* V37 · Torneos: panel informativo. No representa apuestas, premios activados ni ranking real. */
+#btnTournament:not(.active){border-color:#e4c177;background:linear-gradient(160deg,#2a2049,#111c39);color:#fff1cf}
+.tournament-modal{gap:0;padding:clamp(12px,3vw,22px);background:linear-gradient(160deg,#071327f9,#1a1333f9)}
+.tournament-notice{width:fit-content;max-width:100%;padding:8px 12px;border-radius:6px;
+  background:#38202c;border:1px solid #dfab6c;color:#ffe0a5;font-size:11px;font-weight:900;letter-spacing:.4px}
+.tournament-intro,.tournament-zone,.tournament-rules p,.tournament-panel p{max-width:750px;font-size:12px;line-height:1.65;color:#cad8e8;margin:10px 0 13px}
+.tournament-intro strong,.tournament-rules strong,.tournament-panel strong{color:#fff4cf}
+.tournament-schedule{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:980px;margin:9px 0}
+.tournament-schedule>div{display:grid;gap:7px;padding:16px 12px;background:linear-gradient(150deg,#142d4d,#121631);
+  border:1px solid #5b85a0;border-radius:9px;min-width:0}
+.tournament-schedule span{font-size:10px;font-weight:850;letter-spacing:1px;color:#ffd37a}
+.tournament-schedule strong{font-size:clamp(12px,2vw,18px);color:#f1f9ff;overflow-wrap:anywhere}
+.tournament-zone{font-size:10px;margin:5px 0 20px}
+.tournament-panel,.tournament-rules{max-width:980px;background:#071324ed;border:1px solid #53799b;border-radius:10px;padding:17px;margin-bottom:12px}
+.tournament-panel h2,.tournament-rules h2{font-size:13px;letter-spacing:.7px;color:#ffd37a}
+.tournament-panel p,.tournament-rules p{margin:7px 0 13px}
+.tournament-table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+.tournament-table caption{caption-side:bottom;text-align:left;color:#99bcd3;font-size:10px;padding-top:10px}
+.tournament-table th,.tournament-table td{padding:12px 9px;border-bottom:1px solid #47607a;text-align:left;font-size:12px}
+.tournament-table thead th{font-size:10px;color:#9edaf6;letter-spacing:.5px}
+.tournament-table tbody th{color:#ffdb87;font-weight:900}
+.tournament-footer{max-width:980px;text-align:center;font-size:10px;line-height:1.5;color:#a5b9ca;margin:12px 0 28px}
+@media(max-width:620px){
+  header #btnTournament{min-width:64px;padding:6px 7px;font-size:9px}
+  header nav{gap:2px}
+  header #btnVault{min-width:68px}
+  header #btnPlay{min-width:53px}
+  .tournament-schedule{grid-template-columns:1fr;gap:7px}
+  .tournament-schedule>div{grid-template-columns:minmax(90px,.7fr) 1fr;align-items:center;padding:10px}
+  .tournament-table th,.tournament-table td{padding:10px 4px;font-size:10px}
+  .tournament-panel,.tournament-rules{padding:12px}
+}
+@media(max-width:355px){header #btnTournament{min-width:56px;padding:5px;font-size:8px}header #btnVault{min-width:62px}header #btnPlay{min-width:46px}header #btnMute{min-width:31px}}
+
+/* Espacios reservados para anuncios de display (V37). Desactivados hasta aprobar CMP,
+   cuenta y emplazamientos. Nunca se renderizan sobre el Canvas ni sobre sus controles. */
+.ad-placement[hidden]{display:none!important}
+.ad-placement{width:100%;max-width:728px;min-height:90px;margin:16px 0;
+  border:1px solid #536782;border-radius:8px;background:#07162b;overflow:hidden}

@@ -137,6 +137,22 @@ def run(smoke_only=False, injected=False):
                         afterModal:afterModal.steps};
                     }''')
                     assert timing=={'start':0,'catchup':5,'stall':0,'stalled':True,'afterModal':0},(w,h,timing)
+                    # Tournament informational view must never imply active cash prizes.
+                    tournament=page.evaluate('''() => {
+                      setTab('tournament');
+                      const status=document.getElementById('tournamentStatus').textContent;
+                      const noLive=status.includes('SIN TORNEO ACTIVO');
+                      const pausedCorrectly=paused && document.getElementById('tournamentModal').classList.contains('open');
+                      const closedVault=!document.getElementById('vaultModal').classList.contains('open');
+                      const noFakeNames=[...document.querySelectorAll('.tournament-table tbody td:nth-child(2)')].every(e=>e.textContent==='—');
+                      const dates=document.getElementById('tournamentStart').textContent;
+                      setTab('play');
+                      return {noLive,pausedCorrectly,closedVault,noFakeNames,
+                        resumed:!paused,dates:dates!=='—',
+                        overflow:document.documentElement.scrollWidth>innerWidth};
+                    }''')
+                    assert all(v for k,v in tournament.items() if k!='overflow'),(w,h,tournament)
+                    assert not tournament['overflow'],(w,h,tournament)
                     print(f'OK: viewport {w}×{h} · disparo / Códice / 12 reliquias / reloj fijo',flush=True)
                     if (w,h)==(390,844):
                         # A real exception in draw() must not permanently kill

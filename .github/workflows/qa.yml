@@ -17,6 +17,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Verify assets, references and JavaScript syntax
         run: python3 tests/validate_repo.py
+      - name: Tournament schedule and ranking policy tests
+        run: node --test tests/tournament.test.mjs
 
   browser:
     runs-on: ubuntu-24.04
