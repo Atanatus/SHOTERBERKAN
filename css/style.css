@@ -459,3 +459,22 @@ header .stat-box:nth-child(2){grid-column:1/-1;grid-row:2;display:grid;grid-temp
 #faultRestart{background:#ffd37a;color:#142035;border-color:#ffd37a}
 .fault-actions button:focus-visible{outline:3px solid white;outline-offset:2px}
 .fault-panel .fault-footnote{margin:18px 0 0;font-size:11px;color:#bdcce0}
+
+/* V34 · Non-blocking fallback for unavailable raster art. */
+#assetNotice[hidden] {display:none}
+#assetNotice {position:fixed;z-index:100;left:max(10px,env(safe-area-inset-left));
+  bottom:max(10px,env(safe-area-inset-bottom));max-width:min(490px,calc(100vw - 20px));
+  background:#081428f5;color:#fff4cf;border:1px solid #ffcb70;padding:10px 12px;
+  display:flex;align-items:center;gap:12px;border-radius:8px;box-shadow:0 5px 25px #0009;
+  font:700 12px/1.4 var(--font)}
+#assetNotice button {border:1px solid #ffcb70;background:#294358;color:#fff;padding:7px 10px;
+  border-radius:5px;font:800 11px var(--font);cursor:pointer}
+.relic-art-unavailable::before{content:'✧';font:800 42px var(--font);color:#ffe3a0;text-shadow:0 0 10px #ffcf7380}
+.relic-art img[hidden]{display:none}
+html.asset-bg-failed-portrait main{background-image:radial-gradient(ellipse at 50% 35%,#1a4869,#091a36 55%,#060b18 95%)}
+@media(min-aspect-ratio:1/1){html.asset-bg-failed-landscape main{background-image:radial-gradient(ellipse at 50% 45%,#274568,#0a1937 55%,#050a1c 95%)}}
+/* The gradient remains visible underneath button art if WebP is absent. */
+button.tab-btn,.btn-primary,#btnVault:not(.active),button.tab-btn.active,#gameover .btn-primary:hover{
+ background:var(--button-art) center/100% 100% no-repeat,linear-gradient(150deg,#203c5d,#121329 70%,#412e63)}
+#levelBadge,#livesBadge{border:1px solid #d8af69;border-image:var(--tetsu-frame) 95 220 / 15px 35px stretch}
+@media(max-width:620px){#assetNotice{font-size:10px}#assetNotice button{font-size:10px}}

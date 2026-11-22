@@ -294,6 +294,73 @@ def run(smoke_only=False, injected=False):
                         else:
                             print('AVISO: persistencia entre recargas no comprobada (almacenamiento simulado)',flush=True)
                     context.close()
+                # V34: missing raster assets must fall back without pausing the game.
+                missing = [
+                    'assets/gems/nivel-01.webp',
+                    'assets/background/santuario-vertical.webp',
+                    'assets/relics/reliquia-01.webp',
+                    'assets/ui/boton-rubi.webp',
+                ]
+                ctx = browser.new_context(viewport={'width':390,'height':844})
+                page = ctx.new_page()
+                broken_errors = []
+                page.on('pageerror',lambda error: broken_errors.append(str(error)))
+                if injected:
+                    page.route('https://frutidry.test/**',resource_route)
+                    address = 'https://frutidry.test/'
+                else:
+                    address = origin + '/'
+                for path in missing:
+                    page.route('**/' + path, lambda route: route.fulfill(status=404, body='missing for test'))
+                if injected:
+                    original = (ROOT/'index.html').read_text(encoding='utf-8')
+                    markup = original.replace('<head>', '<head><base href="https://frutidry.test/">' + SHIM, 1)
+                    page.set_content(markup,wait_until='load')
+                else:
+                    page.goto(address + 'index.html',wait_until='load')
+                page.wait_for_function('AssetHealth.summary().loading === 0',timeout=20000)
+                fallback = page.evaluate('''() => {
+                  const report=AssetHealth.summary(),relic=document.querySelector('.relic-art');
+                  const before=state.shotCount;shoot();for(let i=0;i<20;i++)update();
+                  return {total:report.total, failed:report.failed, paths:report.paths,
+                    notice:!document.getElementById('assetNotice').hidden,
+                    background:document.documentElement.classList.contains('asset-bg-failed-portrait') &&
+                      getComputedStyle(document.querySelector('main')).backgroundImage.includes('gradient'),
+                    relic:relic.classList.contains('relic-art-unavailable'),
+                    drawFallback:!tetsuGemSprites[0].naturalWidth,
+                    playable:state.shotCount===before+1,
+                    noFault:document.getElementById('faultOverlay').hidden};
+                }''')
+                assert fallback['total']==59 and fallback['failed']==4 and fallback['notice'],fallback
+                assert fallback['background'] and fallback['relic'] and fallback['drawFallback'],fallback
+                assert fallback['playable'] and fallback['noFault'],fallback
+                assert not broken_errors,broken_errors
+                print('OK: 4 recursos ausentes · aviso + 3 fallbacks · partida jugable',flush=True)
+                ctx.close()
+
+                # V34: missing essential JS cannot leave an apparently playable screen.
+                ctx = browser.new_context(viewport={'width':390,'height':844})
+                page = ctx.new_page()
+                if injected:
+                    page.route('https://frutidry.test/**',resource_route)
+                    address='https://frutidry.test/'
+                else:
+                    address=origin+'/'
+                page.route('**/js/render.js',lambda route:route.fulfill(status=404,body='script missing'))
+                if injected:
+                    original=(ROOT/'index.html').read_text(encoding='utf-8')
+                    page.set_content(original.replace('<head>', '<head><base href="https://frutidry.test/">'+SHIM,1), wait_until='load')
+                else:
+                    page.goto(address+'index.html',wait_until='load')
+                boot=page.evaluate('''() => ({visible:!document.getElementById('faultOverlay').hidden,
+                    title:document.getElementById('faultTitle').textContent,
+                    restartHidden:document.getElementById('faultRestart').hidden,
+                    exportHidden:document.getElementById('faultExport').hidden,
+                    reloadAvailable:!!document.getElementById('faultReload').onclick})''')
+                assert boot['visible'] and boot['restartHidden'] and boot['exportHidden'],boot
+                assert 'no ha podido iniciarse' in boot['title'] and boot['reloadAvailable'],boot
+                print('OK: JS esencial ausente · arranque bloqueado y recarga disponible',flush=True)
+                ctx.close()
                 assert not errors, f'Errores JS: {errors}'
             finally:
                 if httpd:

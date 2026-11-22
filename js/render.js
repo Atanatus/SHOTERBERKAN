@@ -1,5 +1,5 @@
 // V14 — FG-001: isolated decorative sprites, never part of the simulation.
-const tetsuNature = Object.fromEntries(Object.entries({"lotus":"assets/nature/loto.webp","crystals":"assets/nature/cristales.webp","branch":"assets/nature/rama-sakura.webp","petal0":"assets/nature/petalo-1.webp","petal1":"assets/nature/petalo-2.webp","petal2":"assets/nature/petalo-3.webp","petal3":"assets/nature/petalo-4.webp","petal4":"assets/nature/petalo-5.webp"}).map(([key,src])=>{const image=new Image();image.src=src;return [key,image];}));
+const tetsuNature = Object.fromEntries(Object.entries({"lotus":"assets/nature/loto.webp","crystals":"assets/nature/cristales.webp","branch":"assets/nature/rama-sakura.webp","petal0":"assets/nature/petalo-1.webp","petal1":"assets/nature/petalo-2.webp","petal2":"assets/nature/petalo-3.webp","petal3":"assets/nature/petalo-4.webp","petal4":"assets/nature/petalo-5.webp"}).map(([key,src])=>{const image=AssetHealth.image(src);return [key,image];}));
 const natureMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
 let natureTime=0;
 const naturePetals=Array.from({length:14},(_,i)=>({x:((i*0.61803398875+.13)%1),y:((i*0.41421356237+.19)%1),speed:12+(i%5)*4,drift:9+(i%4)*4,phase:i*2.39996,size:7+(i%4)*2,spin:(i%2?1:-1)*(.18+(i%3)*.12),key:'petal'+i%5}));
@@ -26,7 +26,7 @@ function drawTetsuNature(){
 }
 
 // V15 — FX-001: additive texture effects, cosmetic only.
-const astralFX=Object.fromEntries(Object.entries({"wave":"assets/fx/onda-cian.webp","gold":"assets/fx/explosion-dorada.webp","star":"assets/fx/destello.webp","vortex":"assets/fx/remolino-magenta.webp","shards":"assets/fx/fragmentos.webp","seal":"assets/fx/sello-ceremonial.webp"}).map(([key,src])=>{const image=new Image();image.src=src;return [key,image];}));
+const astralFX=Object.fromEntries(Object.entries({"wave":"assets/fx/onda-cian.webp","gold":"assets/fx/explosion-dorada.webp","star":"assets/fx/destello.webp","vortex":"assets/fx/remolino-magenta.webp","shards":"assets/fx/fragmentos.webp","seal":"assets/fx/sello-ceremonial.webp"}).map(([key,src])=>{const image=AssetHealth.image(src);return [key,image];}));
 const astralBursts=[];
 function addAstralFX(key,x,y,size,alpha,duration,priority=0){
  if(natureMotion.matches)return;
@@ -133,8 +133,7 @@ function drawFallbackLauncherPlatform(x,y){
  for(const [scale,c,w] of [[1.17,'#ff36cd33',5],[1,'#ffc96d',3],[.87,'#3eeaff',2],[.68,'#86faff',2]]){ctx.beginPath();ctx.ellipse(0,0,r*scale,r*.34*scale,0,0,Math.PI*2);if(scale===1){ctx.fillStyle='#06172b';ctx.fill();}ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke();}ctx.restore();
 }
 // V12: Tetsu PLATFORM-001. Visual only; the launch origin is unchanged.
-const tetsuLauncherPlatform = new Image();
-tetsuLauncherPlatform.src = 'assets/objects/plataforma.webp';
+const tetsuLauncherPlatform = AssetHealth.image('assets/objects/plataforma.webp');
 function drawLauncherPlatform(x,y){
  const img=tetsuLauncherPlatform;
  if(!img.complete || !img.naturalWidth){drawFallbackLauncherPlatform(x,y);return;}
@@ -158,9 +157,8 @@ function drawMetalRing(radius,color){
  ctx.strokeStyle='#fff2bd';ctx.lineWidth=1.5;for(let j=0;j<4;j++){const a=j*Math.PI/2+.3;ctx.beginPath();ctx.arc(0,0,radius*.94,a,a+.35);ctx.stroke();}
 }
 // CORE-001: dedicated art for the materialized target. Collision geometry stays in the simulation.
-const tetsuCoreSprite = new Image();
+const tetsuCoreSprite = AssetHealth.image('assets/objects/nucleo-berkan.webp');
 const tetsuCoreReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-tetsuCoreSprite.src = 'assets/objects/nucleo-berkan.webp';
 function drawTetsuCore() {
   if (!tetsuCoreSprite.complete || !tetsuCoreSprite.naturalWidth) return false;
   const reduced = tetsuCoreReducedMotion.matches;
@@ -263,7 +261,7 @@ function drawBerkanCenter() {
 
 // OBJ-001: Tetsu fruit medallions, independent of gameplay collision geometry.
 const tetsuFruitSprites = Object.fromEntries(Object.entries({"cherry":"assets/fruit/cereza.webp","lemon":"assets/fruit/limon.webp","berry":"assets/fruit/fresa.webp","orange":"assets/fruit/naranja.webp"}).map(([key,src]) => {
-  const image = new Image(); image.src = src; return [key,image];
+  const image = AssetHealth.image(src); return [key,image];
 }));
 function drawFruitOrb(x, y, radius, piece, scale = 1) {
   const fruit = piece.fruit || FRUITS[0];
@@ -443,7 +441,7 @@ function drawHealOrb(x, y, radius, scale = 1) {
 }
 
 // GEO-001: original Tetsu assets, cleaned and normalized to the existing draw radius.
-const tetsuGemSprites = ["assets/gems/nivel-01.webp", "assets/gems/nivel-02.webp", "assets/gems/nivel-03.webp", "assets/gems/nivel-04.webp", "assets/gems/nivel-05.webp", "assets/gems/nivel-06.webp", "assets/gems/nivel-07.webp", "assets/gems/nivel-08.webp", "assets/gems/nivel-09.webp", "assets/gems/nivel-10.webp", "assets/gems/nivel-11.webp", "assets/gems/nivel-12.webp"].map(src => { const image = new Image(); image.src = src; return image; });
+const tetsuGemSprites = ["assets/gems/nivel-01.webp", "assets/gems/nivel-02.webp", "assets/gems/nivel-03.webp", "assets/gems/nivel-04.webp", "assets/gems/nivel-05.webp", "assets/gems/nivel-06.webp", "assets/gems/nivel-07.webp", "assets/gems/nivel-08.webp", "assets/gems/nivel-09.webp", "assets/gems/nivel-10.webp", "assets/gems/nivel-11.webp", "assets/gems/nivel-12.webp"].map(src => { return AssetHealth.image(src); });
 function drawTetsuGem(x,y,radius,piece,rotation,scale) {
   if (piece.kind !== 'normal' || !Number.isInteger(piece.level) || piece.level < 1 || piece.level > tetsuGemSprites.length) return false;
   const image = tetsuGemSprites[piece.level - 1];
@@ -463,7 +461,7 @@ function drawTetsuGem(x,y,radius,piece,rotation,scale) {
 }
 
 const tetsuSpecialSprites = Object.fromEntries(Object.entries({"skull":"assets/special/calavera.webp","bomb":"assets/special/bomba.webp","superball":"assets/special/superbola.webp","heal":"assets/special/vitalidad.webp","accel":"assets/special/aceleracion.webp","slow":"assets/special/ralentizacion.webp"}).map(([key,src])=>{
-  const image = new Image(); image.src=src; return [key,image];
+  const image = AssetHealth.image(src); return [key,image];
 }));
 function drawTetsuSpecial(x,y,radius,piece,scale) {
   const key = piece.isSkull ? 'skull' : piece.isSuperballNode ? 'superball' : piece.isBomb ? 'bomb' : piece.kind;
@@ -555,8 +553,7 @@ function drawDirectionalReticle(x,y,color,piece,active){
 }
 
 
-const tetsuFrame = new Image();
-tetsuFrame.src = 'assets/ui/marco-universal.webp';
+const tetsuFrame = AssetHealth.image('assets/ui/marco-universal.webp');
 function drawTetsuPanel(x,y,w,h,highlight=false){
   ctx.save();
   ctx.fillStyle=highlight?'#123b50f2':'#071326ed';

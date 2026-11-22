@@ -1,3 +1,17 @@
+# FrutiDry — V34 · Resiliencia de recursos gráficos
+
+**Fuente:** `Atanatus/SHOTERBERKAN` · `main` V33 (`d5f33b53`).
+
+- Nuevo `js/assets.js`: registro de carga de sprites, imágenes del Códice, fondos y botones. Los fallos gráficos aparecen en un aviso no bloqueante y en el panel F3.
+- Las gemas y objetos conservan sus dibujos Canvas de respaldo. Las reliquias ausentes muestran un símbolo alternativo y los fondos/botones utilizan degradados CSS. No se altera la simulación.
+- Un detector de arranque avisa si faltan archivos JavaScript esenciales. En ese caso permite recargar, pero no ofrece continuar una partida cuyo motor no ha arrancado.
+- Se añaden pruebas de navegador para recursos ausentes y fallos de scripts esenciales, además de las existentes de reproducción, persistencia y responsive.
+- Sin dependencias nuevas de producción, sin migraciones de `localStorage` y sin modificaciones de las reglas (rulesVersion 20).
+
+**Límite:** una imagen corrupta puede requerir limpiar la caché del navegador o volver a publicar el recurso; no se repara automáticamente. El navegador puede fallar por causas anteriores a la carga de HTML y entonces no es posible mostrar el aviso.
+
+---
+
 # FrutiDry — V33 · Runtime Fault Boundary
 
 **Base exacta:** `Atanatus/SHOTERBERKAN` · `main` V32 (`cd0b3262`).

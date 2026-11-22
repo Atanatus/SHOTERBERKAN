@@ -92,7 +92,7 @@ function updatePerfPanel(now){
  const dpr=canvas.width/Math.max(1,width);
  perf.sample = {fps:Number((perf.frames/d).toFixed(1)),drawMeanMs:Number((perf.drawMs/Math.max(1,perf.frames)).toFixed(2)),drawPeakMs:Number(perf.drawPeak.toFixed(2)),ticksPerSecond:Number((perf.steps/d).toFixed(1))};
  document.getElementById('debugHud').textContent=[
-  `${GAME_BRAND.name} V33 · ${renderQuality.toUpperCase()} · F3 cerrar`,
+  `${GAME_BRAND.name} V34 · ${renderQuality.toUpperCase()} · F3 cerrar`,
   `FPS render: ${(perf.frames/d).toFixed(1)} / 60`,
   `Render medio: ${(perf.drawMs/Math.max(1,perf.frames)).toFixed(2)} ms`,
   `Render máximo: ${perf.drawPeak.toFixed(2)} ms`,
@@ -100,6 +100,7 @@ function updatePerfPanel(now){
   `Pausas largas: ${timingStats.stalls} · tiempo omitido: ${(timingStats.droppedMs/1000).toFixed(1)} s`,
   `Canvas: ${canvas.width} × ${canvas.height} (${dpr.toFixed(2)}x)`,
   `Partículas: ${state.particles.length} · FX: ${astralBursts.length+lanePulses.length}`,
+  `Gráficos: ${AssetHealth.summary().ready}/${AssetHealth.summary().total} · fallos: ${AssetHealth.summary().failed}`,
   `Rutas cacheadas: ${routeCache.size}`
  ].join('\n');
  perf.start=now;perf.frames=0;perf.steps=0;perf.drawMs=0;perf.drawPeak=0;
@@ -140,7 +141,7 @@ function renderVault() {
     const art = document.createElement('div');
     art.className = 'relic-art';
     const img = document.createElement('img');
-    img.src = RELIC_ART[r.id - 1]; img.alt = ''; img.width = 256; img.height = 256; img.decoding = 'async';
+    AssetHealth.track(img, RELIC_ART[r.id - 1], 'relic'); img.alt = ''; img.width = 256; img.height = 256; img.decoding = 'async';
     art.append(img);
     const title = document.createElement('div'); title.className = 'card-title'; title.textContent = r.name;
     const desc = document.createElement('div'); desc.className = 'card-desc';
@@ -244,3 +245,4 @@ resize();
 renderVault();
 resetGame();
 requestAnimationFrame(loop);
+window.__FRUTIDRY_BOOT_READY__ = true;
