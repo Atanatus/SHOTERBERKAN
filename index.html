@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>FrutiDry — Astral Sanctuary · V38</title>
+<title>FrutiDry — Astral Sanctuary · V41</title>
 <meta name="description" content="FrutiDry es un arcade de fusiones, frutas y cristales en Astral Sanctuary. Descubre las doce reliquias del Códice BERKAN.">
 <meta name="theme-color" content="#071122">
 <meta property="og:type" content="website">
@@ -12,6 +12,7 @@
 <link rel="preload" as="image" href="assets/background/santuario-vertical.webp" media="(max-aspect-ratio: 1/1)">
 <link rel="preload" as="image" href="assets/background/santuario-panoramico.webp" media="(min-aspect-ratio: 1/1)">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/account.css">
 <script>
 // Minimal HTML-level guard: also works if a critical defer script never loads.
 window.addEventListener('DOMContentLoaded', () => {
@@ -36,7 +37,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 <header>
   <div class="stat-box">
-    <span class="brand">FrutiDry <small>ASTRAL SANCTUARY · V38</small></span><span class="stat-label" id="envLabel">FrutiDry · Aurora Prisma</span>
+    <span class="brand">FrutiDry <small>ASTRAL SANCTUARY · V41</small></span><span class="stat-label" id="envLabel">FrutiDry · Aurora Prisma</span>
     <span class="stat-val" id="scoreVal">0</span>
     <div class="record-sub">
       <span>★ RÉCORD V20:</span>
@@ -52,6 +53,7 @@ window.addEventListener('DOMContentLoaded', () => {
     <button class="tab-btn active" id="btnPlay" onclick="setTab('play')">SELLO</button>
     <button class="tab-btn" id="btnVault" onclick="setTab('vault')">CÓDICE (<span id="vaultCount">0</span>/12)</button>
     <button class="tab-btn" id="btnTournament" type="button" onclick="setTab('tournament')">TORNEO</button>
+    <button class="tab-btn" id="btnAccount" type="button" aria-label="Cuenta de jugador" title="Cuenta de jugador"><span class="account-nav-icon" aria-hidden="true">人</span><span class="account-nav-text">CUENTA</span></button>
   </nav>
 </header>
 
@@ -144,6 +146,50 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
     <div class="tournament-footer">FRUTIDRY · DISEÑO EN DESARROLLO · NO SE ESTÁN ACEPTANDO PARTICIPACIONES</div>
   </section>
+  <section class="modal account-modal" id="accountModal" aria-labelledby="accountHeading" aria-hidden="true">
+    <div class="modal-header">
+      <div class="modal-title" id="accountHeading">FRUTIDRY · CUENTA DE JUGADOR</div>
+      <button class="tab-btn" type="button" id="accountClose">CERRAR</button>
+    </div>
+    <p class="account-status" id="accountStatus" role="status" aria-live="polite">Registro en preparación.</p>
+    <section class="account-panel" id="accountUnavailable">
+      <h2>CUENTAS EN PREPARACIÓN</h2>
+      <p>El juego continúa disponible sin registrarte. Para habilitar perfiles online, los responsables deben configurar Firebase Authentication y la API REST de FrutiDry.</p>
+      <p>Los récords locales no otorgan XP, posiciones en torneos ni derecho a premios.</p>
+    </section>
+    <section class="account-panel" id="accountAuthPanel" hidden>
+      <h2>ACCESO SEGURO</h2>
+      <form class="account-form" id="accountForm">
+        <label>Correo electrónico
+          <input type="email" id="accountEmail" name="email" autocomplete="username" required maxlength="254" placeholder="correo@ejemplo.com">
+        </label>
+        <label>Contraseña
+          <input type="password" id="accountPassword" name="password" autocomplete="current-password" required minlength="6" maxlength="128">
+        </label>
+        <div class="account-actions">
+          <button class="tab-btn" type="submit" id="accountSubmit">ENTRAR</button>
+          <button class="tab-btn" type="button" id="accountModeButton" hidden>CREAR CUENTA</button>
+          <button class="tab-btn" type="button" id="accountResetPassword">RECUPERAR ACCESO</button>
+        </div>
+      </form>
+      <p>El correo y la contraseña se entregan directamente a Firebase. La API de FrutiDry solo recibe el token de identidad.</p>
+    </section>
+    <section class="account-profile" id="accountProfile" hidden>
+      <h2>MI PROGRESIÓN PERMANENTE</h2>
+      <p>Sesión: <strong id="accountPlayerEmail">—</strong></p>
+      <div class="account-profile-grid">
+        <div><span>NIVEL DE CUENTA</span><strong id="accountLevel">—</strong></div>
+        <div><span>EXPERIENCIA</span><strong id="accountXp">—</strong></div>
+        <div><span>TORNEO REMUNERADO</span><strong id="accountAccess">Cerrado</strong></div>
+      </div>
+      <p class="account-note">Este nivel es diferente del nivel de las gemas. Los resultados locales no conceden XP. No hay inscripciones ni premios activos.</p>
+    </section>
+    <div class="account-actions account-panel">
+      <button class="tab-btn" id="accountRefresh" type="button" hidden>ACTUALIZAR PERFIL</button>
+      <button class="tab-btn" id="accountLogout" type="button" hidden>CERRAR SESIÓN</button>
+      <p>FrutiDry V41 · Autenticación opcional · Sesión limitada a esta pestaña.</p>
+    </div>
+  </section>
   <div class="modal" id="vaultModal">
     <div class="modal-header">
       <div class="modal-title">CÓDICE BERKAN · GEOMETRÍA VIVA</div>
@@ -210,5 +256,8 @@ window.addEventListener('DOMContentLoaded', () => {
 <script defer src="js/continuity.js"></script>
 <script defer src="js/replay.js"></script>
 <script defer src="js/tournament.js"></script>
+<script defer src="js/account-config.js"></script>
+<script defer src="js/account-client.js"></script>
+<script defer src="js/account-ui.js"></script>
 </body>
 </html>

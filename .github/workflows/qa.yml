@@ -25,6 +25,10 @@ jobs:
         run: node --test tests/paypal-payouts.test.mjs
       - name: Permanent accounts and REST authentication contract tests
         run: node --test tests/account-api.test.mjs
+      - name: Server-owned run sessions and unverified diagnostic intake
+        run: node --test tests/run-intake.test.mjs
+      - name: Web account contract and API transport tests
+        run: node --test tests/account-client.test.mjs
 
   browser:
     runs-on: ubuntu-24.04
@@ -42,3 +46,5 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Run browser-level regressions and real-storage tests
         run: python tests/browser_qa.py
+      - name: Account UI, pause and SDK-off responsive tests
+        run: python tests/account-browser-qa.py

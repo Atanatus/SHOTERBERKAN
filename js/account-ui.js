@@ -1,0 +1,197 @@
+/* FrutiDry V41 · classic Vanilla script; Firebase loads only on explicit opt-in. */
+(()=>{
+'use strict';
+/* FrutiDry V41 · Optional Firebase client, no impact on gameplay or local saves.
+   External SDK loads ONLY when explicit public configuration enables accounts. */
+const {validateAccountConfig,fetchPrivateAccount,friendlyAccountError}=FrutiDryAccountClient;
+
+const ids = ['btnAccount','accountModal','accountClose','accountStatus','accountUnavailable',
+  'accountAuthPanel','accountForm','accountEmail','accountPassword','accountSubmit',
+  'accountModeButton','accountResetPassword','accountProfile','accountPlayerEmail',
+  'accountLevel','accountXp','accountAccess','accountRefresh','accountLogout'];
+const el = Object.fromEntries(ids.map(id => [id,document.getElementById(id)]));
+let config = {enabled:false}, sdk=null, auth=null, authUser=null;
+let opened=false, busy=false, signupMode=false, requestId=0, requestController=null;
+function text(id,value){el[id].textContent=String(value);}
+function setMessage(message,kind='info') {
+  el.accountStatus.textContent=message;
+  el.accountStatus.dataset.kind=kind;
+}
+function setBusy(value){
+  busy=value;
+  for(const id of ['accountSubmit','accountModeButton','accountResetPassword','accountRefresh','accountLogout'])
+    el[id].disabled=value;
+}
+function cancelProfileRequest(){
+  requestId++;
+  requestController?.abort();
+  requestController=null;
+}
+function setPublicIdentity(user) {
+  el.accountAuthPanel.hidden=!!user;
+  el.accountProfile.hidden=true;
+  el.accountRefresh.hidden=!user;
+  el.accountLogout.hidden=!user;
+  text('accountPlayerEmail',user?.email||'Correo no disponible');
+  if(!user) el.accountPassword.value='';
+}
+function showAccount(account){
+  text('accountLevel',account.accountLevel);
+  text('accountXp',account.nextLevelXp===null ? account.xp.toLocaleString('es-ES')+' XP (máximo)' :
+    account.xp.toLocaleString('es-ES')+' / '+account.nextLevelXp.toLocaleString('es-ES')+' XP');
+  text('accountAccess', account.tournamentAccessEnabled ? 'Según servidor' : 'Cerrado');
+  el.accountProfile.hidden=false;
+  setMessage(account.tournamentAccessEnabled ? 'Perfil consultado. El torneo necesita su convocatoria oficial.' :
+    'Perfil verificado. Los torneos con dinero siguen desactivados.','ok');
+}
+async function refreshProfile(){
+  if(!authUser||!config.enabled||!auth)return;
+  cancelProfileRequest();
+  const ticket=requestId, uid=authUser.uid;
+  const controller=new AbortController();requestController=controller;
+  const timer=setTimeout(()=>controller.abort(),9000);
+  setMessage('Consultando nivel permanente en el servidor…');
+  el.accountProfile.hidden=true;
+  try {
+    const token=await authUser.getIdToken();
+    if(ticket!==requestId||authUser?.uid!==uid)return;
+    const account=await fetchPrivateAccount({apiBaseUrl:config.apiBaseUrl,token,signal:controller.signal});
+    if(ticket!==requestId||authUser?.uid!==uid)return;
+    if(account.uid!==uid) throw new TypeError('Identidad de cuenta no coincidente');
+    showAccount(account);
+  } catch(error) {
+    if(ticket===requestId && authUser?.uid===uid) setMessage(friendlyAccountError(error),'error');
+  } finally {
+    clearTimeout(timer);
+    if(ticket===requestId)requestController=null;
+  }
+}
+function onFirebaseUser(user){
+  cancelProfileRequest();
+  authUser=user;
+  setPublicIdentity(user);
+  if(user){
+    setMessage('Sesión de Firebase verificada; cargando perfil…');
+    void refreshProfile();
+  } else {
+    setMessage('Accede con tu cuenta Firebase. La XP solo procede del servidor.');
+  }
+}
+async function ensureFirebase(){
+  if(auth)return;
+  if(!config.enabled)return;
+  setMessage('Cargando autenticación segura…');
+  try{
+    const [appApi, authApi] = await Promise.all([
+      import('https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js')
+    ]);
+    const app=appApi.initializeApp(config.firebase,'frutidry-web');
+    const instance=authApi.getAuth(app);
+    await authApi.setPersistence(instance,authApi.browserSessionPersistence);
+    sdk=authApi;auth=instance;
+    authApi.onAuthStateChanged(instance,onFirebaseUser,error=>setMessage(friendlyAccountError(error),'error'));
+    el.accountUnavailable.hidden=true;
+    el.accountAuthPanel.hidden=false;
+    el.accountModeButton.hidden=!config.allowRegistration;
+  }catch(error){
+    setMessage('No se pudo iniciar Firebase. El juego sigue disponible.','error');
+    el.accountUnavailable.hidden=false;
+    el.accountAuthPanel.hidden=true;
+  }
+}
+function closeAccount(){
+  if(!opened)return;
+  opened=false;
+  el.accountModal.classList.remove('open');
+  el.accountModal.setAttribute('aria-hidden','true');
+  el.btnAccount.classList.remove('active');
+  el.accountPassword.value='';
+}
+function openAccount(){
+  if(typeof FaultBoundary!=='undefined'&&FaultBoundary.active())return;
+  if(opened)return;
+  // Reuse the game's exact pause/input/clock policy; no simulation while this modal is open.
+  if(typeof clearInput==='function')clearInput();
+  if(typeof resetFrameClock==='function')resetFrameClock();
+  if(typeof paused!=='undefined')paused=true;
+  for(const id of ['vaultModal','tournamentModal']){
+    const modal=document.getElementById(id);
+    modal.classList.remove('open');modal.setAttribute('aria-hidden','true');
+  }
+  for(const id of ['btnPlay','btnVault','btnTournament'])document.getElementById(id).classList.remove('active');
+  el.btnAccount.classList.add('active');
+  el.accountModal.classList.add('open');
+  el.accountModal.setAttribute('aria-hidden','false');
+  opened=true;
+  el.accountClose.focus();
+  if(config.enabled) void ensureFirebase();
+}
+function requestMode(){
+  if(!config.allowRegistration)return;
+  signupMode=!signupMode;
+  text('accountSubmit', signupMode?'CREAR CUENTA':'ENTRAR');
+  text('accountModeButton',signupMode?'YA TENGO CUENTA':'CREAR CUENTA');
+  el.accountPassword.autocomplete=signupMode?'new-password':'current-password';
+  el.accountPassword.value='';
+}
+el.btnAccount.addEventListener('click',openAccount);
+el.accountClose.addEventListener('click',()=>{closeAccount();if(typeof setTab==='function')setTab('play');});
+// Existing navigation retains its own handlers; this capture listener only hides our panel.
+document.querySelector('header nav').addEventListener('click',event=>{
+  const button=event.target.closest('button');
+  if(button && button!==el.btnAccount)closeAccount();
+},true);
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&opened){event.preventDefault();closeAccount();if(typeof setTab==='function')setTab('play');}
+});
+el.accountModeButton.addEventListener('click',requestMode);
+el.accountForm.addEventListener('submit',async event=>{
+  event.preventDefault();if(busy||!sdk||!auth)return;
+  const email=el.accountEmail.value.trim();const password=el.accountPassword.value;
+  if(!email||!password)return;
+  setBusy(true);
+  setMessage(signupMode?'Creando cuenta…':'Comprobando credenciales…');
+  try {
+    if(signupMode && config.allowRegistration)await sdk.createUserWithEmailAndPassword(auth,email,password);
+    else await sdk.signInWithEmailAndPassword(auth,email,password);
+    el.accountPassword.value='';
+  }catch(error){setMessage(friendlyAccountError(error),'error');}
+  finally{setBusy(false);}
+});
+el.accountResetPassword.addEventListener('click',async()=>{
+  if(busy||!sdk||!auth)return;
+  const email=el.accountEmail.value.trim();
+  if(!email){setMessage('Escribe tu correo para solicitar recuperación.','error');return;}
+  setBusy(true);
+  try{await sdk.sendPasswordResetEmail(auth,email);
+    setMessage('Si la dirección está registrada y habilitada, recibirás instrucciones.','ok');
+  }catch(error){setMessage(friendlyAccountError(error),'error');}
+  finally{setBusy(false);}
+});
+el.accountRefresh.addEventListener('click',()=>{if(!busy)void refreshProfile();});
+el.accountLogout.addEventListener('click',async()=>{
+  if(busy||!sdk||!auth)return;
+  setBusy(true);cancelProfileRequest();
+  try{await sdk.signOut(auth);el.accountPassword.value='';}
+  catch(error){setMessage(friendlyAccountError(error),'error');}
+  finally{setBusy(false);}
+});
+try {
+  config=validateAccountConfig(window.FRUTIDRY_ACCOUNT_CONFIG);
+  if(config.enabled){
+    el.accountUnavailable.hidden=true;
+    el.accountAuthPanel.hidden=true;
+    setMessage('Cuentas en beta privada. Pulsa CUENTA para iniciar Firebase.');
+  } else {
+    el.accountAuthPanel.hidden=true;
+    el.accountUnavailable.hidden=false;
+    setMessage('Registro cerrado: falta configurar la API y Firebase. El arcade funciona sin cuenta.');
+  }
+} catch {
+  el.accountAuthPanel.hidden=true;
+  el.accountUnavailable.hidden=false;
+  setMessage('Configuración de cuentas inválida. No se han activado los accesos.','error');
+}
+
+})();

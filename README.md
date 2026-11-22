@@ -1,3 +1,20 @@
+# FrutiDry V42 · Ingesta de partidas con verificación pendiente (NO XP)
+
+- Nuevo contrato de sesiones creado por el servidor y recepción única de diagnósticos ligados a identidad, semilla, versión de reglas y resolución lógica. Se rechazan duplicados, informes fuera de plazo y campos de recompensa suministrados por el navegador.
+- La recepción **no valida la simulación ni concede XP**: los informes quedan `PENDING_INDEPENDENT_VERIFICATION`. No hay conexión a la API de producción (`runIntake` se omite intencionalmente), ni rankings, torneos o pagos reales.
+- Tests `node --test tests/run-intake.test.mjs`. Instrucciones y limitaciones en `docs/RUN_INTAKE_V42.md`.
+
+---
+
+# FrutiDry V41 · Acceso web opcional y perfil de cuenta
+
+- Nueva pestaña **CUENTA** con acceso por correo/contraseña y perfil permanente leído desde la API V40. La cuenta se mantiene **deshabilitada por defecto** hasta configurar Firebase, MongoDB y Render.
+- Solo cuando el equipo habilite `js/account-config.js`, la página carga bajo demanda el SDK oficial de Firebase Authentication. El registro público dispone de un segundo interruptor independiente, apagado por defecto.
+- No se concede XP, no se acepta nivel local ni se habilitan inscripciones, clasificaciones con premio o PayPal.
+- QA del contrato: `node --test tests/account-client.test.mjs`. Instrucciones completas: `docs/ACCOUNTS_WEB_V41.md`.
+
+---
+
 # FrutiDry V40 · Cuenta permanente y API inicial (sin torneos activos)
 
 - Se incorpora un backend REST **separado** en `server/` preparado para Firebase Authentication + MongoDB Atlas, sin endpoints que acepten XP, puntuaciones o premios enviados desde el navegador.

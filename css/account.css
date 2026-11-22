@@ -1,0 +1,31 @@
+/* FrutiDry V41 · Account surface uses the game's existing sanctuary palette. */
+#btnAccount{--button-art:var(--btn-emerald)}
+.account-nav-icon{display:none}
+.account-modal{gap:12px;align-items:stretch;padding-bottom:28px;overscroll-behavior:contain}
+.account-panel,.account-profile{width:min(100%,650px);margin:0 auto;border:1px solid rgba(114,226,229,.35);border-radius:10px;background:linear-gradient(145deg,rgba(5,24,48,.9),rgba(30,17,56,.92));padding:clamp(14px,3vw,22px);box-shadow:0 6px 32px #050a1b88;color:var(--text)}
+.account-panel h2,.account-profile h2{margin:0 0 12px;color:var(--gold);font-size:clamp(16px,2.5vw,22px)}
+.account-panel p,.account-profile p{color:var(--muted);font-size:13px;line-height:1.55}
+.account-status{width:min(100%,650px);margin:0 auto;border-left:3px solid var(--cyan);padding:11px 14px;background:#0b2233;color:#daf7ff;font-size:13px;line-height:1.45}
+.account-status[data-kind='error']{border-left-color:var(--sakura);color:#ffd7df}
+.account-status[data-kind='ok']{border-left-color:var(--emerald);color:#d5ffed}
+.account-form{display:grid;gap:12px}
+.account-form label{display:grid;gap:5px;font-size:12px;font-weight:700;letter-spacing:.2px;color:#ccecff}
+.account-form input{width:100%;min-height:43px;border:1px solid #5f819f;border-radius:6px;background:#061629;color:white;padding:9px 12px;font:inherit;font-size:16px}
+.account-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px}
+.account-actions button{min-height:44px;min-width:125px;flex:0 1 auto}
+.account-modal button:disabled{opacity:.45;cursor:not-allowed}
+.account-profile-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.account-profile-grid>div{border:1px solid #415b83;border-radius:7px;background:#0d2340;padding:12px;min-width:0;display:grid;gap:5px}
+.account-profile-grid strong{color:#fff2bd;font-size:21px;overflow-wrap:anywhere}
+.account-profile-grid span{font-size:11px;color:#a9c6d6}
+.account-note{font-size:12px!important;color:#e3d5a9!important}
+.account-modal [hidden]{display:none!important}
+@media(max-width:420px){.account-modal{padding:12px 10px 24px}.account-profile-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.account-actions button{flex:1 1 100%}}
+
+/* The existing header is a tight grid on mobile: keep the account tab icon-sized. */
+@media(max-width:620px){
+  header #btnAccount{min-width:32px;width:35px;max-width:35px;padding:5px 3px;font-size:16px}
+  header #btnAccount .account-nav-icon{display:inline}
+  header #btnAccount .account-nav-text{display:none}
+}
+@media(max-width:355px){header #btnAccount{min-width:29px;width:30px;max-width:30px;font-size:14px}}
