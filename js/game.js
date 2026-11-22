@@ -988,12 +988,20 @@ function intersection(ax,ay,bx,by,x,y,r){
 }
 function advanceProjectile(p,phase){
  let left=1; const pad=slotRadius*.85;
+ // Broad-phase: all slot hitboxes are enclosed by this conservative band.
+ // Only skip the per-slot checks when the whole shot segment lies outside it.
+ // This does not change the narrow-phase intersection algorithm or target priority.
+ const lanes=state.routeParams?.laneCount??2;
+ const bandRadius=(lanes-1)*slotRadius*2.55*.5+trackHeight*.24+slotRadius*1.04+1e-6;
+ const bandMin=cy-bandRadius,bandMax=cy+bandRadius;
  for(let segment=0;segment<3&&left>1e-6;segment++){
   const ax=p.x,ay=p.y;const wall=p.vx<0?pad:width-pad;
   const wtime=p.vx? (wall-ax)/p.vx:Infinity;
   const bounce=wtime>=0&&wtime<left;const dt=bounce?wtime:left;
   const bx=ax+p.vx*dt,by=ay+p.vy*dt;let best=Infinity,hit=null;
-  for(let i=0;i<NUM_SLOTS;i++){const pos=getSlotWorldPos(i,phase);const t=intersection(ax,ay,bx,by,pos.x,pos.y,slotRadius*1.04);if(t<best){best=t;hit={type:'slot',index:i};}}
+  if(Math.max(ay,by)>=bandMin && Math.min(ay,by)<=bandMax){
+    for(let i=0;i<NUM_SLOTS;i++){const pos=getSlotWorldPos(i,phase);const t=intersection(ax,ay,bx,by,pos.x,pos.y,slotRadius*1.04);if(t<best){best=t;hit={type:'slot',index:i};}}
+  }
   if(state.centerLevel!==null){const t=intersection(ax,ay,bx,by,cx,cy,coreTargetRadius);if(t<best){best=t;hit={type:'core'};}}
   if(by<12){const t=(12-ay)/(by-ay);if(t>=0&&t<best){best=t;hit={type:'miss'};}}
   if(hit){p.x=ax+(bx-ax)*best;p.y=ay+(by-ay)*best;if(p===state.projectile)trackShotFX(p);return hit;}

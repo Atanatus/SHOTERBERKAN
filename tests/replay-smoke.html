@@ -14,7 +14,7 @@
 </style>
 </head>
 <body>
-<h1>FrutiDry · Pruebas de motor V33</h1>
+<h1>FrutiDry · Pruebas de motor V35</h1>
 <p class="note">Ejecuta el motor real en un marco aislado. No modifica el repositorio ni guarda resultados permanentes.</p>
 <output id="results">Cargando juego…</output>
 <iframe id="game" src="../index.html" title="Motor bajo prueba"></iframe>
@@ -253,6 +253,50 @@ frame.addEventListener('load',()=>{
     const resumed=FaultBoundary.restart();
     return {canceled,stopped,valid,resumed,clear:!FaultBoundary.active()};
   })()`,r=>Object.values(r).every(Boolean));
+  verify('V35 · descarte geométrico mantiene colisiones exactas en 18.000 segmentos',`(()=>{
+    setTab('play');resetGame(35123);
+    const rng=createPRNG(988123),savedRoute=state.routeParams,savedMilestone=state.milestoneIndex;
+    // V34 reference, preserved only inside the regression test (not production).
+    const reference=(p,phase)=>{
+      let left=1;const pad=slotRadius*.85;
+      for(let segment=0;segment<3&&left>1e-6;segment++){
+        const ax=p.x,ay=p.y,wall=p.vx<0?pad:width-pad;
+        const wtime=p.vx?(wall-ax)/p.vx:Infinity;
+        const bounce=wtime>=0&&wtime<left,dt=bounce?wtime:left;
+        const bx=ax+p.vx*dt,by=ay+p.vy*dt;let best=Infinity,hit=null;
+        for(let i=0;i<NUM_SLOTS;i++){
+          const pos=getSlotWorldPos(i,phase),t=intersection(ax,ay,bx,by,pos.x,pos.y,slotRadius*1.04);
+          if(t<best){best=t;hit={type:'slot',index:i};}
+        }
+        if(state.centerLevel!==null){const t=intersection(ax,ay,bx,by,cx,cy,coreTargetRadius);if(t<best){best=t;hit={type:'core'};}}
+        if(by<12){const t=(12-ay)/(by-ay);if(t>=0&&t<best){best=t;hit={type:'miss'};}}
+        if(hit){p.x=ax+(bx-ax)*best;p.y=ay+(by-ay)*best;return hit;}
+        p.x=bx;p.y=by;left-=dt;if(bounce)p.vx=-p.vx;else break;
+      }
+      return null;
+    };
+    let checked=0,mismatch=null;
+    try{
+      for(let milestone=0;milestone<6&&!mismatch;milestone++){
+        state.milestoneIndex=milestone;state.routeParams=generateProceduralRoute(milestone);
+        for(let j=0;j<3000;j++){
+          const phase=rng(),pad=slotRadius*.85;
+          const band=(state.routeParams.laneCount-1)*slotRadius*2.55*.5+trackHeight*.24+slotRadius*1.04;
+          // Include randomized segments close to the conservative band edges.
+          const y=j%5===0?cy+((rng()>.5)?1:-1)*(band+(rng()-.5)*4):rng()*(height+60)-30;
+          const init={x:pad+rng()*(width-2*pad),y,vx:(rng()*2-1)*27,vy:-(.15+rng()*.85)*projectileSpeed()};
+          const a={...init},b={...init};
+          state.centerLevel=j%7===0?10:null;
+          const expected=reference(a,phase),actual=advanceProjectile(b,phase);
+          checked++;
+          if(JSON.stringify([expected,a])!==JSON.stringify([actual,b])){
+            mismatch={milestone,j,init,expected,actual,a,b};break;
+          }
+        }
+      }
+    }finally{state.centerLevel=null;state.routeParams=savedRoute;state.milestoneIndex=savedMilestone;resetGame(35123);}
+    return {checked,mismatch};
+  })()`,r=>r.checked===18000&&r.mismatch===null);
   output.textContent=outcomes.join('\n')+'\n\n'+(outcomes.every(x=>x.startsWith('✓'))?'TODAS LAS PRUEBAS SUPERADAS':'HAY PRUEBAS FALLIDAS');
 });
 </script>

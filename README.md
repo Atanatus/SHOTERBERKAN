@@ -1,3 +1,16 @@
+# FrutiDry — V35 · Auditoría de colisiones y rendimiento
+
+**Base oficial:** `Atanatus/SHOTERBERKAN`, `main` V34 (`6ffbeef34ccf9740f594f471cd7bce1c94840ddb`).
+
+- Optimización segura del cálculo de impactos: antes de comprobar las nueve figuras, se descartan segmentos completamente fuera de la banda vertical que contiene los hitboxes de los carriles.
+- La banda incorpora los desplazamientos de todos los carriles, la amplitud máxima de las ondas y el radio de impacto, con margen numérico. Las intersecciones y el orden de selección de objetivos **no se modifican**.
+- La misma función sirve al disparo real y al predictor; su comportamiento se compara contra una copia del algoritmo V34 en **18.000 segmentos deterministas**, con dos y tres carriles, rebotes y objetivos BERKAN.
+- Se conservan las reglas V20, el esquema de replay, guardados, efectos y sprites. No se introducen dependencias de producción.
+
+**Alcance:** esta optimización reduce trabajo geométrico fuera de la zona de objetivos; la ganancia real de FPS depende del dispositivo, DPR, escena y carga gráfica. La prueba de equivalencia cubre escenarios sintéticos, no una demostración formal de todos los estados posibles.
+
+---
+
 # FrutiDry — V34 · Resiliencia de recursos gráficos
 
 **Fuente:** `Atanatus/SHOTERBERKAN` · `main` V33 (`d5f33b53`).
