@@ -1,3 +1,17 @@
+# FrutiDry — V33 · Runtime Fault Boundary
+
+**Base exacta:** `Atanatus/SHOTERBERKAN` · `main` V32 (`cd0b3262`).
+
+- `js/fault.js` implementa una barrera frente a errores inesperados de simulación, render y eventos globales (incluidas promesas rechazadas). Detiene el juego: nunca intenta continuar con un estado parcialmente modificado.
+- Interfaz modal accesible que ofrece **informe JSON local**, **nuevo ritual** y **recarga manual**. El informe incluye fase, mensaje, traza limitada y métricas mínimas; **no se envía a terceros**. Los informes no son una prueba antitrampas.
+- El bucle principal siempre vuelve a programar `requestAnimationFrame`, aun si se produce una excepción. La pausa técnica impide más ticks, evita nuevos disparos y detiene la música hasta una acción explícita del jugador.
+- El reinicio no borra progreso, récords ni claves de almacenamiento. Si el fallo se produce durante una reproducción, el diagnóstico queda marcado como incompleto.
+- Nuevas pruebas para fallos de render, simulación, promesas rechazadas y recuperación posterior. Sin dependencias de producción y sin cambios en la física ni en las reglas.
+
+**Límite:** no se pueden recuperar automáticamente errores que impiden cargar por completo el HTML/JS, ni fallos graves del navegador. En esos casos está disponible la recarga manual.
+
+---
+
 # FrutiDry — V32 · Temporal Stability
 
 **Base oficial:** `Atanatus/SHOTERBERKAN`, `main` V31 (`124ab04b`).

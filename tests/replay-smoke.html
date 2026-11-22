@@ -14,7 +14,7 @@
 </style>
 </head>
 <body>
-<h1>FrutiDry · Pruebas de motor V32</h1>
+<h1>FrutiDry · Pruebas de motor V33</h1>
 <p class="note">Ejecuta el motor real en un marco aislado. No modifica el repositorio ni guarda resultados permanentes.</p>
 <output id="results">Cargando juego…</output>
 <iframe id="game" src="../index.html" title="Motor bajo prueba"></iframe>
@@ -227,6 +227,32 @@ frame.addEventListener('load',()=>{
     resetFrameClock();
     return {stepsA:a.step,stepsB:b.step,equal:a.snapshot===b.snapshot};
   })()`,r=>r.stepsA===120&&r.stepsB===120&&r.equal);
+  verify('V33 · fallo grave pausa el motor y preserva el progreso',`(()=>{
+    setTab('play');resetGame(331);
+    state.best=4321;state.simFrame=18;
+    const original=state.best;
+    FaultBoundary.report(new Error('fallo simulado del motor'),'simulación');
+    const report=FaultBoundary.buildReport();
+    const prev=state.simFrame;
+    update();setTab('play');
+    const stopped=paused&&state.simFrame===prev&&state.traceIncomplete&&FaultBoundary.active();
+    const visible=!document.getElementById('faultOverlay').hidden;
+    const recovered=FaultBoundary.restart();
+    return {stopped,visible,recovered,restored:state.best===original,
+      newFrame:state.simFrame===0,clear:!FaultBoundary.active()&& !paused,
+      report:report?.format==='frutidry-local-crash'&&report.phase==='simulación'};
+  })()`,r=>Object.values(r).every(Boolean));
+  verify('V33 · rechazo de promesa exige recuperación explícita',`(()=>{
+    setTab('play');resetGame(332);
+    const e=new Event('unhandledrejection',{cancelable:true});
+    Object.defineProperty(e,'reason',{value:new Error('rechazo de prueba')});
+    const canceled=!window.dispatchEvent(e);
+    const rep=FaultBoundary.buildReport();
+    const stopped=FaultBoundary.active()&&paused;
+    const valid=rep?.phase==='promesa rechazada' && rep.error.message==='rechazo de prueba';
+    const resumed=FaultBoundary.restart();
+    return {canceled,stopped,valid,resumed,clear:!FaultBoundary.active()};
+  })()`,r=>Object.values(r).every(Boolean));
   output.textContent=outcomes.join('\n')+'\n\n'+(outcomes.every(x=>x.startsWith('✓'))?'TODAS LAS PRUEBAS SUPERADAS':'HAY PRUEBAS FALLIDAS');
 });
 </script>

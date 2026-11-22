@@ -95,7 +95,7 @@ def run(smoke_only=False, injected=False):
                 text = page.locator('#results').inner_text()
                 assert 'TODAS LAS PRUEBAS SUPERADAS' in text, f'Error en smoke del motor:\n{text}'
                 assert not errors, f'Errores JavaScript: {errors}'
-                print('OK: replay-smoke (16 escenarios)', flush=True)
+                print('OK: replay-smoke (18 escenarios)', flush=True)
                 context.close()
                 if smoke_only:
                     return
@@ -138,6 +138,34 @@ def run(smoke_only=False, injected=False):
                     }''')
                     assert timing=={'start':0,'catchup':5,'stall':0,'stalled':True,'afterModal':0},(w,h,timing)
                     print(f'OK: viewport {w}×{h} · disparo / Códice / 12 reliquias / reloj fijo',flush=True)
+                    if (w,h)==(390,844):
+                        # A real exception in draw() must not permanently kill
+                        # requestAnimationFrame, hide the error or mutate progress.
+                        page.evaluate("""() => {
+                          resetGame(3333);setTab('play');
+                          window.__oldDraw=window.draw;
+                          window.draw=()=>{throw new Error('draw crash V33');};
+                          // Invoke a real loop/render frame synchronously. RAF may be
+                          // throttled by headless Chromium while CI runs tests.
+                          resetFrameClock();loop(1000);
+                        }""")
+                        crash=page.evaluate("""() => {
+                          window.draw=window.__oldDraw;
+                          const report=FaultBoundary.buildReport();
+                          const stopped=paused;
+                          const visible=!document.getElementById('faultOverlay').hidden;
+                          const before=state.simFrame;
+                          setTab('play');update();
+                          const cannotBypass=paused&&state.simFrame===before;
+                          const restarted=FaultBoundary.restart();
+                          return {stopped,visible,cannotBypass,restarted,
+                            phase:report.phase,message:report.error.message,
+                            reset:state.simFrame===0&&!FaultBoundary.active()&&!paused};
+                        }""")
+                        assert crash['stopped'] and crash['visible'] and crash['cannotBypass'],crash
+                        assert crash['restarted'] and crash['reset'],crash
+                        assert crash['phase']=='render' and crash['message']=='draw crash V33',crash
+                        print('OK: fallo real de Canvas · pausa visible · recuperación explícita',flush=True)
                     if (w,h)==(390,844):
                         result = page.evaluate('''() => {
                           resetGame(888);

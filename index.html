@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>FrutiDry — Astral Sanctuary · V30</title>
+<title>FrutiDry — Astral Sanctuary · V33</title>
 <meta name="description" content="FrutiDry es un arcade de fusiones, frutas y cristales en Astral Sanctuary. Descubre las doce reliquias del Códice BERKAN.">
 <meta name="theme-color" content="#071122">
 <meta property="og:type" content="website">
@@ -17,7 +17,7 @@
 
 <header>
   <div class="stat-box">
-    <span class="brand">FrutiDry <small>ASTRAL SANCTUARY · V30</small></span><span class="stat-label" id="envLabel">FrutiDry · Aurora Prisma</span>
+    <span class="brand">FrutiDry <small>ASTRAL SANCTUARY · V33</small></span><span class="stat-label" id="envLabel">FrutiDry · Aurora Prisma</span>
     <span class="stat-val" id="scoreVal">0</span>
     <div class="record-sub">
       <span>★ RÉCORD V20:</span>
@@ -36,6 +36,20 @@
 </header>
 
 <div id="storageAlert" role="alert" hidden></div>
+<div id="faultOverlay" role="alertdialog" aria-modal="true" aria-labelledby="faultTitle" aria-describedby="faultDescription" hidden>
+  <section class="fault-panel">
+    <div class="fault-kicker">FRUTIDRY · PAUSA TÉCNICA</div>
+    <h2 id="faultTitle">La partida se ha detenido</h2>
+    <p id="faultDescription">Se ha detectado un fallo. No continuaremos con un estado de partida potencialmente inconsistente.</p>
+    <p class="fault-details" id="faultDetails"></p>
+    <div class="fault-actions">
+      <button type="button" id="faultExport">↓ GUARDAR INFORME LOCAL</button>
+      <button type="button" id="faultRestart">NUEVO RITUAL</button>
+      <button type="button" id="faultReload">RECARGAR</button>
+    </div>
+    <p class="fault-footnote">El informe solo se descarga en tu dispositivo. No se envía a ningún servidor ni certifica una puntuación.</p>
+  </section>
+</div>
 <main>
   <div class="hud-badge" id="levelBadge">
     <div class="badge-title">Nivel Actual</div>
@@ -128,6 +142,7 @@
 <script defer src="js/config.js"></script>
 <script defer src="js/audio.js"></script>
 <script defer src="js/data.js"></script>
+<script defer src="js/fault.js"></script>
 <script defer src="js/game.js"></script>
 <script defer src="js/render.js"></script>
 <script defer src="js/app.js"></script>

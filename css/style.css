@@ -439,3 +439,23 @@ header .stat-box:nth-child(2){grid-column:1/-1;grid-row:2;display:grid;grid-temp
   padding:10px 14px;border:1px solid #ffd27d;border-radius:7px;
   background:#2d1025;color:#fff1ce;box-shadow:0 6px 28px #000b;
   font:600 12px/1.45 system-ui,sans-serif;text-align:center;pointer-events:none}
+
+/* V33 · Fatal execution boundary. Explicit recovery, never automatic scoring continuation. */
+#faultOverlay[hidden]{display:none}
+#faultOverlay{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;
+  padding:clamp(12px,4vw,28px);background:rgba(2,6,19,.94);overflow:auto}
+.fault-panel{width:min(100%,540px);max-height:calc(100dvh - 28px);overflow-y:auto;
+  padding:clamp(20px,4vw,32px);border:1px solid #caa36b;border-radius:12px;
+  background:linear-gradient(145deg,#111d35,#21152c);color:#e8f4ff;
+  box-shadow:0 18px 60px #000a;font:500 14px/1.55 system-ui,sans-serif}
+.fault-kicker{font-size:11px;font-weight:900;letter-spacing:1.5px;color:#ffd37a}
+.fault-panel h2{font-size:clamp(22px,5vw,30px);margin:10px 0;color:#fff}
+.fault-panel p{margin:8px 0 14px}
+.fault-details{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;
+  overflow-wrap:anywhere;color:#ffd79f}
+.fault-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:22px}
+.fault-actions button{min-height:44px;padding:10px 13px;border-radius:6px;
+  border:1px solid #8ecbdf;background:#122d4d;color:#e9f8ff;font:700 11px system-ui,sans-serif;cursor:pointer}
+#faultRestart{background:#ffd37a;color:#142035;border-color:#ffd37a}
+.fault-actions button:focus-visible{outline:3px solid white;outline-offset:2px}
+.fault-panel .fault-footnote{margin:18px 0 0;font-size:11px;color:#bdcce0}

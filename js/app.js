@@ -46,11 +46,16 @@ function sampleSimulationClock(now,active){
 }
 
 function loop(now){
+ let phase='reloj';
+ try {
+ if(FaultBoundary.active())return;
  const active=!paused&&!document.hidden&&!state.gameOver;
  const frame=sampleSimulationClock(now,active);
  let steps=0;
  for(let i=0;i<frame.steps;i++){
+   phase='simulación';
    update();
+   phase='replay';
    if(typeof ReplayLab!=='undefined')ReplayLab.afterStep();
    steps++;
    if(state.gameOver||paused||document.hidden){accumulator=0;break;}
@@ -61,15 +66,23 @@ function loop(now){
    updateAstralFX(delta);updateLanePulses(delta);updateImpactFX(delta);
    if(!natureMotion.matches)natureTime+=delta;
  }else if(state.gameOver){astralBursts.length=0;lanePulses.length=0;resetImpactFX();}
+ phase='audio';
  AudioEngine.tick(state,!stillActive);
  // The Códice and game-over overlays fully cover the canvas.
  const shouldDraw=stillActive && (now-lastRender>=FRAME_TIMING.stepMs-1 || !lastRender);
  if(shouldDraw){
    const start=perf.visible?performance.now():0;
+   phase='render';
    draw();lastRender=lastRender ? Math.max(now-FRAME_TIMING.stepMs,lastRender+FRAME_TIMING.stepMs) : now;
    if(perf.visible){const ms=performance.now()-start;perf.frames++;perf.steps+=steps;perf.drawMs+=ms;perf.drawPeak=Math.max(perf.drawPeak,ms);updatePerfPanel(now);}
  }
- requestAnimationFrame(loop);
+ } catch(error) {
+   FaultBoundary.report(error,phase);
+ } finally {
+   // Even after a fatal exception the RAF itself must remain scheduled.
+   // The boundary pauses all gameplay; a fresh ritual is always user-initiated.
+   requestAnimationFrame(loop);
+ }
 }
 function updatePerfPanel(now){
  if(!perf.visible)return;
@@ -79,7 +92,7 @@ function updatePerfPanel(now){
  const dpr=canvas.width/Math.max(1,width);
  perf.sample = {fps:Number((perf.frames/d).toFixed(1)),drawMeanMs:Number((perf.drawMs/Math.max(1,perf.frames)).toFixed(2)),drawPeakMs:Number(perf.drawPeak.toFixed(2)),ticksPerSecond:Number((perf.steps/d).toFixed(1))};
  document.getElementById('debugHud').textContent=[
-  `${GAME_BRAND.name} V32 · ${renderQuality.toUpperCase()} · F3 cerrar`,
+  `${GAME_BRAND.name} V33 · ${renderQuality.toUpperCase()} · F3 cerrar`,
   `FPS render: ${(perf.frames/d).toFixed(1)} / 60`,
   `Render medio: ${(perf.drawMs/Math.max(1,perf.frames)).toFixed(2)} ms`,
   `Render máximo: ${perf.drawPeak.toFixed(2)} ms`,
@@ -140,6 +153,7 @@ function renderVault() {
 }
 
 function setTab(tab) {
+  if (tab==='play' && FaultBoundary.active()) return;
   const modal = document.getElementById('vaultModal');
   const btnPlay = document.getElementById('btnPlay');
   const btnVault = document.getElementById('btnVault');
