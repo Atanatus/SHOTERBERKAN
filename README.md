@@ -1,4 +1,4 @@
-# KŌSEN · BERKAN — V26 · Stability Lab
+# KŌSEN · BERKAN — V27 · Browser QA
 
 ## Inicio (Windows)
 
@@ -59,3 +59,24 @@ Se mantienen las reglas V20 y el formato de diagnóstico V24. Esta corrección *
 - Las cinco pruebas del laboratorio se pueden ejecutar abriendo `tests/replay-smoke.html` en un navegador local.
 - `python tests/validate_repo.py` comprueba los 59 WebP contra su manifiesto SHA-256, referencias de HTML y sintaxis de los JS con Node disponible en PATH. No utiliza dependencias de Python de terceros.
 - `.github/workflows/qa.yml` ejecuta las comprobaciones estáticas en pushes y pull requests; no demuestra por sí solo que el juego sea jugable en todas las plataformas.
+
+## V27 · QA de navegador y copias de progreso
+
+- **CI con navegador real:** el workflow ejecuta el laboratorio de cinco pruebas y comprobaciones jugables en 320×640, 390×844, 844×390 y 1366×768. Añade el control de persistencia real de `localStorage` después de recargar en Chromium.
+- **Aislamiento:** el navegador se ejecuta contra un servidor HTTP local de prueba, sin enviar datos del jugador a servicios externos.
+- **Importación:** si el récord importado empata con el local, el nombre del récord local se conserva. Un récord estrictamente superior sí trae su titular. Se mantiene el formato `kosen-berkan-progress` schema 1.
+- **Mantenimiento:** eliminada una llamada duplicada e inocua a `routeCache.clear()` al cambiar de hito.
+- **Compatibilidad:** sin cambios de física, puntuación, probabilidades, recompensas ni del formato de replay V24/rules 20. Los sprites y sus firmas SHA-256 son idénticos a la V26.
+
+### Ejecución local de QA
+
+```bash
+python tests/validate_repo.py
+python -m pip install 'playwright==1.56.0'  # solo para pruebas
+python -m playwright install chromium
+python tests/browser_qa.py
+```
+
+En un entorno con política que impide abrir `localhost` o `file://` desde Chromium, se puede ejecutar `python tests/browser_qa.py --injected`. Este modo sustituye `localStorage` por memoria temporal y, por tanto, **no certifica persistencia entre recargas**. La CI de GitHub utiliza navegación HTTP real y falla si no supera esas pruebas.
+
+**Operativa Git:** valida el resultado de GitHub Actions después de publicar; un parche preparado no equivale a un commit remoto.

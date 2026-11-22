@@ -420,7 +420,7 @@ function checkMilestoneProgress() {
     state.envIndex = state.milestoneIndex % ZEN_ENVIRONMENTS.length;
     state.proceduralLayout = generateProceduralScene(state.seed, state.milestoneIndex);
     state.routeParams = generateProceduralRoute(state.milestoneIndex);
-    routeCache.clear(); routeCache.clear(); for(let i=lanePulses.length-1;i>=0;i--)if(lanePulses[i].lane>=state.routeParams.laneCount)lanePulses.splice(i,1);
+    routeCache.clear(); for(let i=lanePulses.length-1;i>=0;i--)if(lanePulses[i].lane>=state.routeParams.laneCount)lanePulses.splice(i,1);
     seedHazardsAndSuperball();
     state.corePulseBoost = 0.85;
     spawnDopamineBurst(cx, cy, THEME.cyan, 1.4);

@@ -69,7 +69,8 @@ const ContinuityLab = (() => {
     const b = validateBackup(raw);
     // Complete validation occurs before storage changes; write failures roll back prior values.
     const mergedBest = Math.max(state.best, b.best);
-    const mergedHolder = b.best >= state.best ? b.holder : state.recordHolder;
+    // An equal record is not an improvement: preserve the local holder on ties.
+    const mergedHolder = b.best > state.best ? b.holder : state.recordHolder;
     const mergedCores = Math.max(state.coresDetonated, b.cores);
     const mergedRelics = [...new Set([...state.unlockedRelics, ...b.relics])].sort((a, c) => a-c);
     const mergedLegacy = Math.max(0, Number(STORE.get('kosen_v3_best',0)) || 0, b.legacyBest);

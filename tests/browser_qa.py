@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""KŌSEN browser regression tests (test-only Playwright dependency).
+
+Normal/CI: python tests/browser_qa.py
+Restricted environments that block browser navigation:
+    python tests/browser_qa.py --injected
+
+The injected fallback uses an in-memory localStorage substitute; it cannot
+prove persistence across a real browser restart. CI uses actual HTTP storage.
+"""
+from __future__ import annotations
+
+import argparse
+import functools
+import http.server
+import mimetypes
+import os
+from pathlib import Path
+import shutil
+import threading
+from urllib.parse import urlparse
+
+from playwright.sync_api import sync_playwright
+
+ROOT = Path(__file__).resolve().parents[1]
+SHIM = """<script>
+(() => {
+  const data = new Map();
+  const storage = {
+    get length() { return data.size; },
+    key(i) { return [...data.keys()][i] ?? null; },
+    getItem(k) { return data.has(String(k)) ? data.get(String(k)) : null; },
+    setItem(k,v) { data.set(String(k),String(v)); },
+    removeItem(k) { data.delete(String(k)); },
+    clear() { data.clear(); }
+  };
+  Object.defineProperty(window,'localStorage',{configurable:true,value:storage});
+})();
+</script>"""
+
+
+def resource_route(route):
+    path = (ROOT / urlparse(route.request.url).path.lstrip('/')).resolve()
+    if not path.is_file() or ROOT not in path.parents:
+        route.fulfill(status=404, body='Not found')
+        return
+    route.fulfill(
+        status=200,
+        content_type=mimetypes.guess_type(path.name)[0] or 'application/octet-stream',
+        body=path.read_bytes(),
+    )
+
+
+def injected_game(page):
+    page.route('https://kosen.test/**', resource_route)
+    original = (ROOT / 'index.html').read_text(encoding='utf-8')
+    markup = original.replace('<head>', '<head><base href="https://kosen.test/">' + SHIM, 1)
+    page.set_content(markup, wait_until='load')
+
+
+def run(smoke_only=False, injected=False):
+    errors = []
+    browser_kwargs = {'headless': True, 'args': ['--disable-dev-shm-usage', '--no-sandbox']}
+    chrome = os.environ.get('KOSEN_CHROME')
+    if not chrome and injected:
+        chrome = shutil.which('chromium') or shutil.which('google-chrome')
+    if chrome:
+        browser_kwargs['executable_path'] = chrome
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(**browser_kwargs)
+        try:
+            httpd = None
+            if not injected:
+                handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(ROOT))
+                httpd = http.server.ThreadingHTTPServer(('127.0.0.1', 0), handler)
+                thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+                thread.start()
+                origin = f'http://127.0.0.1:{httpd.server_port}'
+            else:
+                origin = None
+            try:
+                context = browser.new_context(viewport={'width':390,'height':844}, device_scale_factor=1)
+                page = context.new_page()
+                page.on('pageerror', lambda error: errors.append(str(error)))
+                if injected:
+                    page.route('https://kosen.test/**', resource_route)
+                    smoke = (ROOT/'tests/replay-smoke.html').read_text(encoding='utf-8')
+                    page.set_content(smoke.replace('src="../index.html"', ''), wait_until='load')
+                    game = (ROOT/'index.html').read_text(encoding='utf-8')
+                    game = game.replace('<head>', '<head><base href="https://kosen.test/">'+SHIM, 1)
+                    page.evaluate('(html) => { document.getElementById("game").srcdoc=html; }', game)
+                else:
+                    page.goto(f'{origin}/tests/replay-smoke.html', wait_until='load')
+                page.wait_for_function("document.querySelector('#results')?.textContent.includes('PRUEBAS SUPERADAS') || document.querySelector('#results')?.textContent.includes('PRUEBAS FALLIDAS')",timeout=20000)
+                text = page.locator('#results').inner_text()
+                assert 'TODAS LAS PRUEBAS SUPERADAS' in text, f'Error en smoke del motor:\n{text}'
+                assert not errors, f'Errores JavaScript: {errors}'
+                print('OK: replay-smoke (5 escenarios)', flush=True)
+                context.close()
+                if smoke_only:
+                    return
+                for w,h in [(320,640),(390,844),(844,390),(1366,768)]:
+                    context = browser.new_context(viewport={'width':w,'height':h}, device_scale_factor=1)
+                    page = context.new_page()
+                    page.on('pageerror', lambda error: errors.append(str(error)))
+                    if injected:
+                        injected_game(page)
+                    else:
+                        page.goto(f'{origin}/index.html',wait_until='load')
+                    details = page.evaluate('''() => {
+                      const c=document.getElementById('gameCanvas');
+                      setTab('vault');const isPaused=paused;
+                      setTab('play');const resumed=!paused;
+                      const before=state.shotCount;shoot();
+                      for(let i=0;i<42;i++)update();
+                      return {canvas:c.width>0&&c.height>0,paused:isPaused,resumed,
+                        shots:state.shotCount-before,seed:state.seed,
+                        hud:!!document.getElementById('scoreVal').textContent,
+                        cards:document.querySelectorAll('#relicGrid .relic-card').length};
+                    }''')
+                    assert details['canvas'] and details['paused'] and details['resumed'], (w,h,details)
+                    assert details['shots']==1 and details['hud'] and details['cards']==12,(w,h,details)
+                    assert not errors,(w,h,errors)
+                    print(f'OK: viewport {w}×{h} · disparo / Códice / 12 reliquias',flush=True)
+                    if (w,h)==(390,844):
+                        result = page.evaluate('''() => {
+                          resetGame(888);
+                          state.best=2500;state.recordHolder='LOCAL';
+                          STORE.set('kosen_v20_best',2500);
+                          STORE.set('kosen_v20_holder','LOCAL');
+                          const backup=ContinuityLab.createBackup();
+                          backup.progress.best=2500;backup.progress.holder='IMPORTADO';
+                          ContinuityLab.mergeBackup(backup);
+                          const tiePreserved=state.recordHolder==='LOCAL';
+                          const bad={...backup,settings:{...backup.settings,musicVolume:2}};
+                          const original=ContinuityLab.createBackup();
+                          let rejected=false;
+                          try{ContinuityLab.mergeBackup(bad);}catch(_){rejected=true;}
+                          const after=ContinuityLab.createBackup();
+                          const unchanged=JSON.stringify(original.progress)===JSON.stringify(after.progress) && JSON.stringify(original.settings)===JSON.stringify(after.settings);
+                          const stored=STORE.get('kosen_v20_best',null)===2500;
+                          return {tiePreserved,rejected,unchanged,stored};
+                        }''')
+                        assert all(result.values()),('progreso',result)
+                        print('OK: fusión de progreso, empate de récord, rechazo de copia inválida',flush=True)
+                        if not injected:
+                            # Persisted browser storage is part of the public game's contract.
+                            page.reload(wait_until='load')
+                            persisted=page.evaluate("() => ({best:state.best,name:state.recordHolder})")
+                            assert persisted=={'best':2500,'name':'LOCAL'},persisted
+                            print('OK: persistencia real de localStorage tras recargar',flush=True)
+                        else:
+                            print('AVISO: persistencia entre recargas no comprobada (almacenamiento simulado)',flush=True)
+                    context.close()
+                assert not errors, f'Errores JS: {errors}'
+            finally:
+                if httpd:
+                    httpd.shutdown()
+                    httpd.server_close()
+        finally:
+            browser.close()
+    print('BROWSER QA: TODAS LAS PRUEBAS SUPERADAS', flush=True)
+
+
+if __name__ == '__main__':
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--injected',action='store_true',help='Fallback sin navegación (localStorage simulado)')
+    parser.add_argument('--smoke-only',action='store_true')
+    args=parser.parse_args()
+    run(smoke_only=args.smoke_only,injected=args.injected)
