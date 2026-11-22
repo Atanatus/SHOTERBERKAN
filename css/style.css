@@ -431,3 +431,11 @@ header .stat-box:nth-child(2){grid-column:1/-1;grid-row:2;display:grid;grid-temp
 #practiceIndicator{position:absolute;bottom:9px;left:10px;padding:6px 9px;z-index:12;border-radius:5px;border:1px solid #ffdc80;background:#171228e0;color:#ffe7ac;font-size:10px;font-weight:850;pointer-events:none}
 #practiceIndicator[hidden]{display:none}
 @media(max-width:520px){.continuity-panel{padding:11px}.continuity-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.continuity-actions .tab-btn{width:100%;font-size:9px;padding:8px 7px}.continuity-actions .tab-btn:nth-child(4){grid-column:1/-1}}
+
+/* V30: persistent storage failure / crash recovery warning. Hidden in normal play. */
+#storageAlert[hidden]{display:none}
+#storageAlert{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  transform:translateX(-50%);z-index:999;max-width:min(92vw,680px);width:max-content;
+  padding:10px 14px;border:1px solid #ffd27d;border-radius:7px;
+  background:#2d1025;color:#fff1ce;box-shadow:0 6px 28px #000b;
+  font:600 12px/1.45 system-ui,sans-serif;text-align:center;pointer-events:none}

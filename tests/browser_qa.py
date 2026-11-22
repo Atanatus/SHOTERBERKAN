@@ -144,6 +144,104 @@ def run(smoke_only=False, injected=False):
                         }''')
                         assert all(result.values()),('progreso',result)
                         print('OK: fusión de progreso, empate de récord, rechazo de copia inválida',flush=True)
+                        # Simulate a quota failure AFTER the first legacy keys were
+                        # written. The journal must restore raw values, not just HUD.
+                        failed=page.evaluate('''() => {
+                          const watched=['kosen_v20_best','kosen_v20_holder','kosen_cores',
+                            'kosen_relics','kosen_v3_best','kosen_muted',
+                            'kosen_music_enabled','kosen_music_volume','kosen_render_quality'];
+                          const before=watched.map(k=>[k,localStorage.getItem(k)]);
+                          const prop=Object.getOwnPropertyDescriptor(window,'localStorage');
+                          const real=window.localStorage;
+                          let failedOnce=false, thrown=false;
+                          Object.defineProperty(window,'localStorage',{configurable:true,value:{
+                            getItem:k=>real.getItem(k),
+                            setItem:(k,v)=>{
+                              if(k==='kosen_cores'&&!failedOnce){failedOnce=true;throw Error('quota simulated');}
+                              real.setItem(k,v);
+                            },
+                            removeItem:k=>real.removeItem(k)
+                          }});
+                          try {
+                            const incoming=ContinuityLab.createBackup();
+                            incoming.progress.best=9999;incoming.progress.cores+=500;
+                            try {ContinuityLab.mergeBackup(incoming);}catch(e){thrown=e.message.includes('restaurado');}
+                          } finally {Object.defineProperty(window,'localStorage',prop);}
+                          return {
+                            thrown,
+                            identical:before.every(([k,v])=>localStorage.getItem(k)===v),
+                            clean:localStorage.getItem('frutidry_import_journal_v1')===null,
+                            unchanged:state.best===2500&&state.recordHolder==='LOCAL'
+                          };
+                        }''')
+                        assert all(failed.values()),('rollback de importación',failed)
+                        print('OK: fallo de cuota simulado · rollback de nueve claves',flush=True)
+                        # Failure during the rollback itself must preserve the
+                        # journal; a later recovery pass repairs the partial keys.
+                        blocked=page.evaluate('''() => {
+                          const keys=['kosen_v20_best','kosen_v20_holder','kosen_cores',
+                            'kosen_relics','kosen_v3_best','kosen_muted',
+                            'kosen_music_enabled','kosen_music_volume','kosen_render_quality'];
+                          const before=keys.map(k=>[k,localStorage.getItem(k)]);
+                          const prop=Object.getOwnPropertyDescriptor(window,'localStorage');
+                          const real=window.localStorage;
+                          let errors=0,thrown=false;
+                          Object.defineProperty(window,'localStorage',{configurable:true,value:{
+                            getItem:k=>real.getItem(k),
+                            setItem:(k,v)=>{
+                              if(k==='kosen_cores'&&errors++<2)throw Error('disk unavailable');
+                              real.setItem(k,v);
+                            },
+                            removeItem:k=>real.removeItem(k)
+                          }});
+                          try {
+                            const incoming=ContinuityLab.createBackup();
+                            incoming.progress.best=9999;incoming.progress.cores+=500;
+                            try{ContinuityLab.mergeBackup(incoming);}catch(e){thrown=e.message.includes('recuperación pendiente');}
+                          }finally{Object.defineProperty(window,'localStorage',prop);}
+                          const pending=STORAGE_IMPORT.status==='blocked' &&
+                            localStorage.getItem('frutidry_import_journal_v1')!==null;
+                          const blockedWrite=STORE.set('kosen_v20_best',12345)===false;
+                          const recovered=STORAGE_IMPORT.recover();
+                          return {thrown,pending,blockedWrite,
+                            recovered:recovered==='recovered',
+                            identical:before.every(([k,v])=>localStorage.getItem(k)===v),
+                            clean:localStorage.getItem('frutidry_import_journal_v1')===null};
+                        }''')
+                        assert all(blocked.values()),('recuperación diferida',blocked)
+                        print('OK: rollback interrumpido · diario retenido · recuperación diferida',flush=True)
+                        # Incomplete import: mimics a crash after two keys were
+                        # persisted, but before the transaction marker was deleted.
+                        incomplete=page.evaluate('''() => {
+                          const keys=['kosen_v20_best','kosen_v20_holder','kosen_cores',
+                            'kosen_relics','kosen_v3_best','kosen_muted',
+                            'kosen_music_enabled','kosen_music_volume','kosen_render_quality'];
+                          const before=keys.map(k=>[k,localStorage.getItem(k)]);
+                          localStorage.setItem('frutidry_import_journal_v1',JSON.stringify({version:1,before}));
+                          localStorage.setItem('kosen_v20_best','999999');
+                          localStorage.setItem('kosen_cores','888888');
+                          return before;
+                        }''')
+                        if injected:
+                            recovered=page.evaluate('''() => {
+                              const result=STORAGE_IMPORT.recover();
+                              return {status:result,best:STORE.get('kosen_v20_best',-1),
+                                journal:localStorage.getItem('frutidry_import_journal_v1'),
+                                banner:!document.getElementById('storageAlert').hidden};
+                            }''')
+                            assert recovered=={'status':'recovered','best':2500,'journal':None,'banner':True},recovered
+                            print('OK: recuperación de diario interrumpido (simulada, sin recarga)',flush=True)
+                        else:
+                            page.reload(wait_until='load')
+                            recovered=page.evaluate('''() => ({
+                              status:STORAGE_IMPORT.status,best:state.best,
+                              name:state.recordHolder,cores:state.coresDetonated,
+                              journal:localStorage.getItem('frutidry_import_journal_v1'),
+                              banner:!document.getElementById('storageAlert').hidden
+                            })''')
+                            assert recovered['status']=='recovered' and recovered['best']==2500 and recovered['name']=='LOCAL',recovered
+                            assert recovered['journal'] is None and recovered['banner'],recovered
+                            print('OK: cierre simulado · recuperación real al recargar',flush=True)
                         if not injected:
                             # Persisted browser storage is part of the public game's contract.
                             page.reload(wait_until='load')

@@ -1,3 +1,27 @@
+# FrutiDry — V30 · Almacenamiento recuperable
+
+**Fuente oficial:** https://github.com/Atanatus/SHOTERBERKAN (rama `main`).
+
+La V30 no altera el motor, la puntuación, los sprites ni el formato de los JSON.
+La importación de progreso ahora escribe un **diario de recuperación previo**
+(`frutidry_import_journal_v1`) con las nueve claves de almacenamiento heredadas.
+Si el navegador se cierra durante una importación, el siguiente arranque
+**revierte la importación incompleta** antes de leer el progreso.
+
+Una importación completada y confirmada elimina el diario. Si el navegador
+bloquea o agota `localStorage`, se muestra una advertencia persistente y la
+importación se cancela sin modificar el estado del juego. Si la reversión
+falla también, el diario permanece para intentar recuperarlo al recargar.
+El aviso no significa que se guarden partidas en la nube: las copias JSON
+externas siguen siendo necesarias. El almacenamiento local puede perderse
+por limpieza de datos o cambio de origen del sitio.
+
+La persistencia se verifica en GitHub Actions (`tests/browser_qa.py`);
+la alternativa `--injected` usa almacenamiento simulado y **no** prueba
+persistencia entre recargas.
+
+---
+
 # FrutiDry — Astral Sanctuary · V28
 
 ## Identidad oficial · V28

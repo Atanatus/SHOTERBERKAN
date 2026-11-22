@@ -6,6 +6,11 @@ const ContinuityLab = (() => {
   const SAFE_MAX = 1_000_000_000_000;
   const status = document.getElementById('dataStatus');
   const input = document.getElementById('progressFile');
+  if (STORAGE_IMPORT.notice) {
+    const message=STORAGE_IMPORT.notice;
+    status.textContent=message;
+    status.dataset.error=String(STORAGE_IMPORT.status === 'blocked');
+  }
   let lastCompletedRun = null;
 
   function feedback(message, error = false) {
@@ -81,16 +86,9 @@ const ContinuityLab = (() => {
       ['kosen_music_enabled', b.musicEnabled], ['kosen_music_volume', b.musicVolume],
       ['kosen_render_quality', b.quality]
     ];
-    const before = new Map();
-    try {
-      for (const [key] of entries) before.set(key, localStorage.getItem(key));
-      for (const [key,value] of entries) localStorage.setItem(key,JSON.stringify(value));
-    } catch (err) {
-      for (const [key,prev] of before) {
-        try { if (prev===null) localStorage.removeItem(key); else localStorage.setItem(key,prev); } catch {}
-      }
-      throw new Error('No se pudo guardar el progreso (almacenamiento bloqueado o lleno)');
-    }
+    // Nine legacy keys are committed through a persisted rollback journal.
+    // A browser crash mid-import is recovered before game state is initialized.
+    STORAGE_IMPORT.commit(entries);
     state.best = mergedBest;
     state.recordHolder = mergedHolder;
     state.coresDetonated = mergedCores;
