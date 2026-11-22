@@ -226,3 +226,12 @@ El diseño técnico, la separación servidor/cliente, los riesgos legales y la e
 - Cada premio se concilia por estado propio: `SUCCESS` significa abonado; `PENDING`, `UNCLAIMED` y `ONHOLD` no significan cobrado; errores o reversos requieren revisión. Un lote `SUCCESS` nunca autoriza por sí solo marcar los tres premios como pagados.
 - La interfaz indica que PayPal es un método previsto, no operativo; no solicita correos ni cambia el juego. **La elegibilidad y los flags de autorización solo podrán provenir de fuentes verificadas en servidor**, nunca del navegador.
 - Documentación: [`docs/PAYPAL_PAYOUTS.md`](docs/PAYPAL_PAYOUTS.md). Pruebas: `node --test tests/paypal-payouts.test.mjs`.
+
+## V39 · Operativa semanal de torneos (borradores internos)
+
+- `server/tournament-operations.mjs` crea calendarios verificados para viernes-domingo-lunes en `Europe/Madrid`, incluidos cambios DST, y valida borradores **siempre inactivos**. Los importes opcionales son solo internos, calculados en céntimos; nunca se anuncian en las previsualizaciones públicas.
+- `scripts/tournament-ops.mjs` genera propuestas locales, cinco mensajes promocionales (jueves a lunes), previsualización sin datos sensibles y checklist de preparación. Ninguna función abre inscripciones, admite puntuaciones, publica anuncios ni envía dinero.
+- `ops/drafts` y `ops/previews` quedan fuera de Git. No servir esas carpetas en HTTP; no almacenar aquí credenciales ni datos de premiados.
+- Documentos: [`docs/REUNION_SOCIOS_TORNEOS_2026-11-22.md`](docs/REUNION_SOCIOS_TORNEOS_2026-11-22.md) y [`docs/OPERATIVA_TORNEOS_DESARROLLADORES.md`](docs/OPERATIVA_TORNEOS_DESARROLLADORES.md).
+- Pruebas del dominio: `node --test tests/tournament-operations.test.mjs`, añadidas a GitHub Actions.
+- Estado: **preparación interna solamente**. Para abrir torneos reales siguen faltando cuentas, backend, partidas servidor-autoritativas, registro legal, validación antifraude, autorizaciones y conciliación de PayPal.

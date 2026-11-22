@@ -13,3 +13,7 @@ coverage/
 *.local.json
 *progreso*.json
 *diagnostico*.json
+
+# Operación privada de torneos (nunca publicar en Pages)
+/ops/drafts/
+/ops/previews/
