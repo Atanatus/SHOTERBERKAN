@@ -26,6 +26,7 @@ const ReplayLab = (() => {
   function input(){return [Number(state.aimAngle.toFixed(9)),Number(!!state.isAiming),Number(!!keyState.left),Number(!!keyState.right)];}
   function validate(raw){
     if(!raw||raw.format!=='kosen-berkan-run-diagnostic'||raw.schema!==2||raw.gameVersion!==24||raw.rulesVersion!==20)throw Error('Se requiere diagnóstico V24 con reglas 20');
+    if(raw.recording?.complete===false)throw Error('Diagnóstico incompleto: no se puede reproducir');
     if(!Number.isSafeInteger(raw.seed)||raw.seed<1||raw.seed>2147483647)throw Error('Semilla inválida');
     if(!raw.viewport||raw.viewport.width!==width||raw.viewport.height!==height)throw Error(`Pantalla incompatible: replay ${raw.viewport?.width}×${raw.viewport?.height}; actual ${width}×${height}`);
     if(!raw.stats||!Number.isSafeInteger(raw.stats.simFrame)||raw.stats.simFrame<1||raw.stats.simFrame>MAX_STEPS)throw Error('Número de pasos inválido');
@@ -80,8 +81,11 @@ const ReplayLab = (() => {
   }
   function beforeStep(){
     if(!state.replayActive){
+      if(state.traceIncomplete)return;
+      if(state.simFrame>=TRACE_LIMITS.steps){markTraceIncomplete('Límite de duración del diagnóstico');return;}
       const v=input();
       if(!lastInput||!v.every((n,i)=>n===lastInput[i])){
+        if(state.inputLog.length>=TRACE_LIMITS.inputs){markTraceIncomplete('Límite de entradas del diagnóstico');return;}
         state.inputLog.push({s:state.simFrame,v});lastInput=v;
       }
       return;
@@ -118,6 +122,8 @@ const ReplayLab = (() => {
   }
   function afterStep(){
     if(!state.replayActive){
+      if(state.simFrame>TRACE_LIMITS.steps)markTraceIncomplete('Límite de duración del diagnóstico');
+      if(state.traceIncomplete)return;
       // Cheap, opt-in-by-default semantic tracing. No particles, audio or layout.
       // A reset initializes the array before a new run can produce snapshots.
       if(state.simFrame>0&&state.simFrame%CHECKPOINT_INTERVAL===0 &&

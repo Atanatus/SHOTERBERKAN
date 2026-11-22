@@ -1,3 +1,16 @@
+# FrutiDry — V31 · Stress & Bounded Diagnostics
+
+**Base:** `Atanatus/SHOTERBERKAN`, `main` V30 (`e5ac0dc7`).
+
+- Efectos cosméticos acotados: 240 partículas, 24 ondas, 12 estrellas, 24 textos simultáneos. Se eliminan primero los más antiguos; no cambia la simulación física.
+- Registro de diagnóstico acotado: 25.000 eventos de entrada, 15.000 acciones y 216.000 pasos (una hora simulada). La partida puede seguir sin límite; únicamente el registro de QA se detiene.
+- El diagnóstico avisa de que está incompleto y `ReplayLab.validate` rechaza reproducirlo. Los diagnósticos V24–V30 completos siguen aceptándose.
+- Pruebas de estrés de límites y recuperación de contadores en `tests/replay-smoke.html`, ejecutadas también por GitHub Actions.
+
+**Importante:** No es un sistema antitrampas. Conserva las claves de progreso y los formatos de copia anteriores. La limitación afecta exclusivamente a los logs de QA y a los efectos visuales, no a las puntuaciones o reglas V20.
+
+---
+
 # FrutiDry — V30 · Almacenamiento recuperable
 
 **Fuente oficial:** https://github.com/Atanatus/SHOTERBERKAN (rama `main`).

@@ -26,7 +26,7 @@ let state = {
   coresDetonated: Math.max(0, Number(STORE.get('kosen_cores',0)) || 0),
   unlockedRelics: (()=>{const v=STORE.get('kosen_relics',[]);return Array.isArray(v)?[...new Set(v.filter(x=>Number.isInteger(x)&&x>=1&&x<=12))]:[]})(),
   actionLog: [],
-  inputLog: [], simFrame: 0, replayActive: false, replayData: null,
+  inputLog: [], traceIncomplete: false, traceTruncationReason: null, simFrame: 0, replayActive: false, replayData: null,
   practiceSeed: null,
   startedAt: null,
   milestoneIndex: 0,
@@ -367,6 +367,22 @@ function settleAmmo(){
   state.upcomingPiece=nextRandomPiece();
 }
 
+// V31: bounded diagnostics never interrupt the game; incomplete traces are
+// explicitly non-replayable. Replay application still records accepted actions.
+const TRACE_LIMITS = Object.freeze({steps:216000,actions:15000,inputs:25000});
+function markTraceIncomplete(reason){
+  if (!state.traceIncomplete){state.traceIncomplete=true;state.traceTruncationReason=reason;}
+}
+function recordReplayAction(entry){
+  if(state.replayActive){state.actionLog.push(entry);return;}
+  if(state.traceIncomplete)return;
+  if(state.simFrame>=TRACE_LIMITS.steps || state.actionLog.length>=TRACE_LIMITS.actions){
+    markTraceIncomplete(state.simFrame>=TRACE_LIMITS.steps?'Límite de duración del diagnóstico':'Límite de acciones del diagnóstico');
+    return;
+  }
+  state.actionLog.push(entry);
+}
+function trimVisualArray(array,max){if(array.length>max)array.splice(0,array.length-max);}
 function swapActiveAndUpcoming() {
   if (state.replayActive && !ReplayLab.isApplying()) return;
   if (paused || state.gameOver || state.projectile || state.chain || state.pendingAmmo) return;
@@ -374,7 +390,7 @@ function swapActiveAndUpcoming() {
   state.nextPiece = state.upcomingPiece;
   state.upcomingPiece = temp;
   state.swapAnim = 1;
-  state.actionLog.push({
+  recordReplayAction({
     s: state.simFrame, t: state.tick,
     m: state.milestoneIndex,
     p: Number(state.trackPhase.toFixed(4)),
@@ -391,6 +407,7 @@ function swapActiveAndUpcoming() {
     life: 0.75,
     lineWidth: 2.2
   });
+  trimVisualArray(state.shockwaves,24);
 }
 
 function checkLevel10Spawn() {
@@ -445,7 +462,7 @@ function resetGame(testSeed = null) {
   state.arrowAngle = 0;
   state.aimAngle = 0;
   state.score = 0;
-  state.actionLog = []; state.inputLog = []; state.traceCheckpoints = []; state.simFrame=0;state.replayActive=false;state.replayData=null;
+  state.actionLog = []; state.inputLog = []; state.traceCheckpoints = []; state.traceIncomplete=false;state.traceTruncationReason=null;state.simFrame=0;state.replayActive=false;state.replayData=null;
   if (typeof ReplayLab !== 'undefined') ReplayLab.resetRecording();
   state.milestoneIndex = 0;
   state.envIndex = 0;
@@ -507,7 +524,6 @@ function checkRelicUnlock(level) {
 }
 
 function spawnDopamineBurst(x, y, color, intensity = 1) {
-  if(state.particles.length>240)state.particles.splice(0,state.particles.length-240);
   if(REDUCED_MOTION)intensity=.35;
   state.shockwaves.push({
     x, y,
@@ -548,6 +564,9 @@ function spawnDopamineBurst(x, y, color, intensity = 1) {
       size: 2.5 + Math.random() * 3.2
     });
   }
+  trimVisualArray(state.particles,240);
+  trimVisualArray(state.shockwaves,24);
+  trimVisualArray(state.starbursts,12);
 }
 
 function spawnParticles(x, y, color, count = 14) {
@@ -564,10 +583,12 @@ function spawnParticles(x, y, color, count = 14) {
       size: 2.5 + Math.random() * 2.5
     });
   }
+  trimVisualArray(state.particles,240);
 }
 
 function addFloatingText(x, y, text, color, big = false) {
   state.floatingTexts.push({ x, y, text, color, life: 1, big });
+  trimVisualArray(state.floatingTexts,24);
 }
 
 function isPointInSwapBox(px, py) {
@@ -615,7 +636,7 @@ function shoot() {
   const vx = Math.sin(state.aimAngle) * speed;
   const vy = -Math.cos(state.aimAngle) * speed;
 
-  state.actionLog.push({
+  recordReplayAction({
     s: state.simFrame, t: state.tick,
     m: state.milestoneIndex,
     p: Number(state.trackPhase.toFixed(4)),

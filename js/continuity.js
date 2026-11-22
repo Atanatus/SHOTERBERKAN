@@ -122,6 +122,9 @@ const ContinuityLab = (() => {
       ammo:{current:compactPiece(state.nextPiece),reserve:compactPiece(state.upcomingPiece)},
       actions:state.actionLog.map(entry=>({...entry})),
       inputs:state.inputLog.map(entry=>({...entry})),
+      recording:{complete:!state.traceIncomplete&&!state.replayActive&&state.simFrame<=TRACE_LIMITS.steps,
+        reason:state.traceTruncationReason||(state.replayActive?'Reproducción en curso':state.simFrame>TRACE_LIMITS.steps?'Duración máxima de diagnóstico':null),
+        limits:TRACE_LIMITS},
       // Optional periodic V29 checkpoints. Old schema-2 diagnostics without this
       // field remain compatible with V24 rules and the final-state verifier.
       checkpoints:(state.traceCheckpoints || []).map(entry=>({s:entry.s,state:entry.state})),
@@ -145,7 +148,10 @@ const ContinuityLab = (() => {
       // Digest is a tamper-detection aid for transport, NOT an anti-cheat verification.
       try {data.payloadSha256 = await sha256(JSON.stringify(data));} catch {data.hashUnavailable = true;}
       downloadJSON('frutidry-diagnostico-'+Date.now()+'.json',data);
-      feedback('Diagnóstico preparado. Incluye semilla, entradas, estado y resolución; no certifica la puntuación.');
+      feedback(data.recording?.complete===false
+        ? 'Diagnóstico parcial exportado: se alcanzó un límite de registro. No es reproducible.'
+        : 'Diagnóstico preparado. Incluye semilla, entradas, estado y resolución; no certifica la puntuación.',
+        data.recording?.complete===false);
     } catch (error) { feedback('Error al exportar diagnóstico: '+error.message,true); }
   }
   document.getElementById('btnExportProgress').addEventListener('click',()=>{

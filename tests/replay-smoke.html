@@ -14,7 +14,7 @@
 </style>
 </head>
 <body>
-<h1>FrutiDry · Pruebas de reproducción V28</h1>
+<h1>FrutiDry · Pruebas de motor V31</h1>
 <p class="note">Ejecuta el motor real en un marco aislado. No modifica el repositorio ni guarda resultados permanentes.</p>
 <output id="results">Cargando juego…</output>
 <iframe id="game" src="../index.html" title="Motor bajo prueba"></iframe>
@@ -126,6 +126,51 @@ frame.addEventListener('load',()=>{
     try{ReplayLab.validate(data);}catch(e){rejected=e.message.includes('periódico inválido');}
     return {count:data.checkpoints.length,rejected};
   })()`,r=>r.count===2&&r.rejected);
+  verify('Efectos acotados tras ráfaga de 100 impactos',`(()=>{
+    setTab('play');resetGame(9600);
+    for(let i=0;i<100;i++){
+      spawnDopamineBurst(100,100,'#ff44aa',1.8);
+      spawnParticles(120,110,'#ffeecc',40);
+      addFloatingText(100,90,'+100','#ffffff',true);
+    }
+    return {particles:state.particles.length,shockwaves:state.shockwaves.length,
+      starbursts:state.starbursts.length,texts:state.floatingTexts.length};
+  })()`,r=>r.particles===240&&r.shockwaves===24&&r.starbursts===12&&r.texts===24);
+  verify('Entradas acotadas y diagnóstico parcial no reproducible',`(()=>{
+    setTab('play');resetGame(9601);
+    state.inputLog.length=25000;
+    state.aimAngle=.5;
+    ReplayLab.beforeStep();
+    const run=ContinuityLab.captureRun();
+    let rejected=false;
+    try{ReplayLab.validate(run);}catch(e){rejected=e.message.includes('incompleto');}
+    const ok={count:state.inputLog.length,incomplete:state.traceIncomplete,
+      reason:run.recording.reason,rejected};
+    resetGame(9601);
+    return ok;
+  })()`,r=>r.count===25000&&r.incomplete&&r.rejected&&r.reason.includes('entradas'));
+  verify('Límite de acciones, partida y reinicio',`(()=>{
+    setTab('play');resetGame(9602);
+    state.actionLog.length=15000;
+    recordReplayAction({s:0,a:'swap'});
+    const blocked=state.actionLog.length===15000&&state.traceIncomplete;
+    const diag=ContinuityLab.captureRun();
+    resetGame(9602);
+    const restarted=!state.traceIncomplete&&state.actionLog.length===0;
+    state.simFrame=216000;
+    ReplayLab.beforeStep();
+    const duration=state.traceIncomplete&&state.traceTruncationReason.includes('duración');
+    resetGame(9602);
+    return {blocked,restarted,duration,complete:diag.recording.complete};
+  })()`,r=>r.blocked&&r.restarted&&r.duration&&r.complete===false);
+  verify('Simulación prolongada de 30.000 pasos y checkpoints estables',`(()=>{
+    setTab('play');resetGame(9603);
+    for(let i=0;i<30000;i++){update();ReplayLab.afterStep();}
+    const data=ContinuityLab.captureRun();
+    return {steps:state.simFrame,checkpoints:state.traceCheckpoints.length,
+      traceComplete:data.recording.complete,last:state.traceCheckpoints.at(-1)?.s,
+      limitsOK:state.inputLog.length<=25000&&state.actionLog.length<=15000};
+  })()`,r=>r.steps===30000&&r.checkpoints===50&&r.last===30000&&r.traceComplete&&r.limitsOK);
   output.textContent=outcomes.join('\n')+'\n\n'+(outcomes.every(x=>x.startsWith('✓'))?'TODAS LAS PRUEBAS SUPERADAS':'HAY PRUEBAS FALLIDAS');
 });
 </script>
