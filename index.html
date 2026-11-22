@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KŌSEN · BERKAN — V23 · Continuity Lab</title>
+<link rel="preload" as="image" href="assets/background/santuario-vertical.webp" media="(max-aspect-ratio: 1/1)">
+<link rel="preload" as="image" href="assets/background/santuario-panoramico.webp" media="(min-aspect-ratio: 1/1)">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <div class="stat-box">
+    <span class="brand">KŌSEN · BERKAN <small>光線 / V23</small></span><span class="stat-label" id="envLabel">Kōsen · Aurora Prisma</span>
+    <span class="stat-val" id="scoreVal">0</span>
+    <div class="record-sub">
+      <span>★ RÉCORD V20:</span>
+      <input type="text" maxlength="14" class="record-input" id="headerRecordName" aria-label="Nombre del récord" placeholder="Tu nombre">
+      <span id="bestVal">0</span>
+    </div>
+  </div>
+  <div class="stat-box" style="align-items: center;">
+    <span class="stat-label" id="milestoneLabel">Hito 1 · Berkan 10</span>
+    <span class="stat-val gold" id="coreCountVal">0</span><div id="hitoProgress" role="progressbar" aria-label="Progreso del hito" aria-valuemin="0" aria-valuemax="100"><i></i></div>
+  </div>
+  <nav><button class="tab-btn" id="btnMute" aria-label="Silenciar sonido" aria-pressed="false">♪</button>
+    <button class="tab-btn active" id="btnPlay" onclick="setTab('play')">SELLO</button>
+    <button class="tab-btn" id="btnVault" onclick="setTab('vault')">CÓDICE (<span id="vaultCount">0</span>/12)</button>
+  </nav>
+</header>
+
+<main>
+  <div class="hud-badge" id="levelBadge">
+    <div class="badge-title">Nivel Actual</div>
+    <div class="badge-value" id="currentLevelText">Hito 1 · Nv. 1</div>
+  </div>
+
+  <div class="hud-badge" id="livesBadge">
+    <div class="badge-title">Vidas (5)</div>
+    <div class="pills-row" id="livesPips">
+      <span class="life-pill"></span>
+      <span class="life-pill"></span>
+      <span class="life-pill"></span>
+      <span class="life-pill"></span>
+      <span class="life-pill"></span>
+    </div>
+  </div>
+
+  <div id="comboHud"><div class="combo-title">RESONANCIA</div><div class="combo-number" id="v2ComboNumber">×1</div><div class="combo-tier" id="v2ComboTier">LISTO</div><div class="combo-bar"><div class="combo-fill" id="v2ComboFill"></div></div></div><div id="toast" role="status">★ ¡HITO ALCANZADO!</div>
+  <div id="practiceIndicator" hidden>LABORATORIO · SIN RÉCORD</div>
+  <div id="debugHud" hidden aria-live="off"></div>
+  <canvas id="gameCanvas" aria-label="Tablero de juego Kōsen. Arrastra para apuntar y suelta para disparar."></canvas>
+
+  <div id="gameover">
+    <div style="font-size: 12.5px; color: var(--sakura); font-weight: 900; letter-spacing: 2.5px;" id="goReason">SELLO INTERRUMPIDO</div>
+    <div style="font-size: 54px; font-weight: 900; letter-spacing: -1px;" id="finalScore">0</div>
+    <div class="go-name-row">
+      <label for="goRecordName">Nombre récord</label>
+      <input type="text" maxlength="14" class="go-name-input" id="goRecordName" placeholder="Escribe tu nombre">
+    </div>
+    <div style="font-size: 11px; color: var(--gold); font-weight: 800;" id="goRecordSummary">RÉCORD: --- · 0</div>
+    <div class="hash-box" id="auditHash">SIG: CALCULANDO...</div>
+    <button class="btn-primary" onclick="resetGame()">NUEVO RITUAL</button>
+    <button class="tab-btn diag-gameover" id="btnDownloadRun" type="button">↓ EXPORTAR DIAGNÓSTICO</button>
+  </div>
+
+  <div class="modal" id="vaultModal">
+    <div class="modal-header">
+      <div class="modal-title">CÓDICE BERKAN · GEOMETRÍA VIVA</div>
+      <button class="tab-btn" onclick="setTab('play')">CERRAR</button>
+    </div>
+    <section class="astral-audio-panel" aria-label="Opciones de audio">
+      <div class="astral-audio-head"><span>♫ ASTRAL SYMPHONY</span><button class="tab-btn" id="btnMusicMode" type="button" aria-pressed="true">MÚSICA: SÍ</button></div>
+      <label class="astral-volume-label" for="musicVolume">VOLUMEN MUSICAL <output id="musicVolumeValue">60%</output></label>
+      <input id="musicVolume" type="range" min="0" max="100" step="5" value="60" aria-label="Volumen de la música">
+      <p>La banda sonora comienza después de interactuar con el juego. <strong>M</strong> activa o desactiva la música; <strong>♪</strong> silencia todo.</p>
+    </section>
+    <section class="performance-panel" aria-label="Rendimiento gráfico">
+      <label for="renderQuality">CALIDAD DE RENDERIZADO</label>
+      <select id="renderQuality">
+        <option value="auto">ALTA · Retina hasta 2× (V21)</option>
+        <option value="eco">ECO · Retina hasta 1,25×</option>
+      </select>
+      <p>El modo ECO reduce píxeles dibujados, sin alterar físicas ni dificultad. Pulsa <b>F3</b> para mostrar FPS y tiempos de renderizado en escritorio.</p>
+    </section>
+    <section class="continuity-panel" aria-label="Copias de seguridad y diagnóstico">
+      <div class="continuity-header"><strong>◈ CONTINUIDAD DEL SANTUARIO</strong><span>V24</span></div>
+      <p>Exporta tus récords, reliquias y preferencias a un JSON portátil. Importar <b>fusiona</b> el progreso: no reduce récords ni elimina reliquias.</p>
+      <div class="continuity-actions">
+        <button type="button" class="tab-btn" id="btnExportProgress">↓ COPIA DE PROGRESO</button>
+        <button type="button" class="tab-btn" id="btnImportProgress">↑ IMPORTAR COPIA</button>
+        <input type="file" accept=".json,application/json" id="progressFile" hidden aria-label="Seleccionar copia JSON">
+        <button type="button" class="tab-btn" id="btnExportDiagnostic">↓ DIAGNÓSTICO / REPLAY</button>
+        <button type="button" class="tab-btn" id="btnImportReplay">▶ REPRODUCIR DIAGNÓSTICO</button><input id="replayFile" type="file" accept=".json,application/json" hidden aria-label="Seleccionar diagnóstico V24">
+      </div>
+      <div class="continuity-lab">
+        <label for="seedInput">LABORATORIO · SEMILLA DE PRUEBA (1–2147483647)</label>
+        <div class="continuity-seed"><input id="seedInput" inputmode="numeric" type="number" step="1" min="1" max="2147483647" placeholder="Ej. 20261122"><button type="button" class="tab-btn" id="btnSeedRun">INICIAR PRUEBA</button></div>
+        <p>Reinicia con tablero y PRNG fijados. <b>No guarda récords, reliquias ni núcleos.</b> El diagnóstico V24 permite verificar la reproducción de entradas en el mismo tamaño de tablero y motor. No es una firma antitrampas.</p>
+      </div>
+      <output id="replayStatus" class="data-status" role="status" aria-live="polite">Reproducción: inactiva.</output>
+      <output id="dataStatus" class="data-status" role="status" aria-live="polite">Tus datos permanecen en este dispositivo hasta que los exportes.</output>
+    </section>
+    <div class="grid" id="relicGrid"></div><p id="legacyRecord" style="font-size:11px;color:var(--muted);margin-top:12px"></p>
+    <div style="margin-top: 18px; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 14px; border: 1px solid var(--border);">
+      <div style="font-size: 10px; font-weight: 800; color: var(--gold); margin-bottom: 6px; letter-spacing: 0.8px;">GUÍA RÁPIDA · BERKAN, FRUTAS & RIESGO</div>
+      <div style="font-size: 10.5px; color: var(--muted); line-height: 1.5;">
+        • <b>Núcleo BERKAN:</b> Centro táctico del circuito; al alcanzar nivel 10 se materializa para detonarlo colando un disparo.<br>
+        • <b>Frutas objetivo y proyectil (🍒 · 🍋 · 🍓 · 🍊):</b> Aparecen tanto en el circuito como en tu disparo; fusiona frutas iguales o encájalas en huecos.<br>
+        • <b>Superbola (★) junto a Calavera (☠):</b> Acierta a la superbola para ascender de nivel; tocar la calavera termina la partida.<br>
+        • <b>Ráfaga:</b> Acelera el circuito durante 6 s y concede +40% a todas las fusiones del disparo lanzado mientras está activa. Calma reduce la velocidad durante 5 s.
+        <br>• <b>Munición:</b> La reserva se genera tras resolver el impacto y las cadenas; con pocas vidas aumenta la oportunidad de recibir vitalidad. Las frutas automáticas reservan el último hueco.
+        <br>• <b>Banda sonora:</b> Música original sintetizada que evoluciona con los hitos, combos y aparición del núcleo. Puedes ajustar su volumen en este Códice o pulsar M para activarla/desactivarla.
+        <br>• <b>Récord V20:</b> Nueva tabla local por cambios de puntuación. El récord anterior se conserva en el navegador.
+        <br>• <b>Apuntar a los lados:</b> Arrastra con el dedo/ratón o usa <b>A / D</b> o <b>← / →</b> para girar la flecha y suelta o pulsa <b>Espacio</b> para disparar. Cambia la pieza con <b>C</b> o la caja de reserva. La línea predice el primer impacto si disparas ahora.
+      </div>
+    </div>
+  </div>
+</main>
+
+<script defer src="js/config.js"></script>
+<script defer src="js/audio.js"></script>
+<script defer src="js/data.js"></script>
+<script defer src="js/game.js"></script>
+<script defer src="js/render.js"></script>
+<script defer src="js/app.js"></script>
+<script defer src="js/continuity.js"></script>
+<script defer src="js/replay.js"></script>
+</body>
+</html>

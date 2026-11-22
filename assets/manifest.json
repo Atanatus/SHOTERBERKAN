@@ -1,0 +1,477 @@
+{
+  "version": "23",
+  "assets": {
+    "background/santuario-vertical.webp": {
+      "bytes": 585640,
+      "size": [
+        887,
+        1774
+      ],
+      "sha256": "fbfee837fb884c0d7bf27feb2709fc6528a77b0498fa78d6576c436ed010e963"
+    },
+    "background/santuario-panoramico.webp": {
+      "bytes": 577920,
+      "size": [
+        1672,
+        941
+      ],
+      "sha256": "872737c4f76077401ca52d095c1a9039d43800392a271a8f109dd205be93c336"
+    },
+    "ui/marco-universal.webp": {
+      "bytes": 46778,
+      "size": [
+        560,
+        209
+      ],
+      "sha256": "5ff9a9d98e53b1e1343d20ec56c4285d887f7b4ebb8c87d905ef8e383d57b278"
+    },
+    "ui/boton-rubi.webp": {
+      "bytes": 36556,
+      "size": [
+        420,
+        219
+      ],
+      "sha256": "bbc7aa055f6c1b580dde6c87a4622d24181c573c4a02417ecd287489d8ece0ce"
+    },
+    "ui/boton-amatista.webp": {
+      "bytes": 36976,
+      "size": [
+        420,
+        219
+      ],
+      "sha256": "8435df3dded50c928fa91f7b44c03707ec01d170bf256fcab59eba35d4a32039"
+    },
+    "ui/boton-zafiro.webp": {
+      "bytes": 38716,
+      "size": [
+        420,
+        217
+      ],
+      "sha256": "79d9a16c2e189b77b4288cc2ef3c614834879e59efc3d75cd091e5fb09bcdb17"
+    },
+    "ui/boton-esmeralda.webp": {
+      "bytes": 38208,
+      "size": [
+        420,
+        218
+      ],
+      "sha256": "3538ad33421a3412c7d7eb3d84f80bb92fd1d8db8f7eeb2310638b1467f47fa1"
+    },
+    "ui/boton-ambar.webp": {
+      "bytes": 38872,
+      "size": [
+        420,
+        217
+      ],
+      "sha256": "927b993a04004aaf605af685e72f21403fd9a39281173b9115ecbac55167b8b8"
+    },
+    "ui/boton-obsidiana.webp": {
+      "bytes": 36970,
+      "size": [
+        420,
+        217
+      ],
+      "sha256": "4f0955a2074c208ff258dcf76369761cecbca3c3b435fd09775b9df079d93b52"
+    },
+    "nature/loto.webp": {
+      "bytes": 45954,
+      "size": [
+        384,
+        323
+      ],
+      "sha256": "642821194670406867f0b6297cc95b40726592043a8c9515d035401f67f95fb4"
+    },
+    "nature/cristales.webp": {
+      "bytes": 54372,
+      "size": [
+        380,
+        384
+      ],
+      "sha256": "92b4d712028c4b8289d4006a59963fc688c94378bebb8e3db3eaa60c754d7469"
+    },
+    "nature/rama-sakura.webp": {
+      "bytes": 59722,
+      "size": [
+        384,
+        341
+      ],
+      "sha256": "7b357d41730a15d7d4fb51e27081109a353c965356928d532c709ff6f2399bd5"
+    },
+    "nature/petalo-1.webp": {
+      "bytes": 4604,
+      "size": [
+        96,
+        94
+      ],
+      "sha256": "efcc70d4088a14437edba5421ee9cd8e7086e5dcdc741d40eb5edfa80b8570e3"
+    },
+    "nature/petalo-2.webp": {
+      "bytes": 4516,
+      "size": [
+        85,
+        96
+      ],
+      "sha256": "624bde69b66416f40d6bfd9f11fe6fd1ec114b811e20a14776b5bfb418f98c48"
+    },
+    "nature/petalo-3.webp": {
+      "bytes": 3552,
+      "size": [
+        96,
+        58
+      ],
+      "sha256": "28f5e95a29cdf093bf58483d885ec0728dfd9a7ef3db4d161a7a6ff3fadbf7d1"
+    },
+    "nature/petalo-4.webp": {
+      "bytes": 3994,
+      "size": [
+        96,
+        70
+      ],
+      "sha256": "5d02d12fd7f5ea637b5f8c9ce95b1e8ad0f8c7289e18f87d0f3e22f2efff1c5a"
+    },
+    "nature/petalo-5.webp": {
+      "bytes": 3246,
+      "size": [
+        96,
+        48
+      ],
+      "sha256": "449acc5360089241782ea2d90b1d8fa4c5b16b31b500ced85c0b88994b237c8d"
+    },
+    "fx/onda-cian.webp": {
+      "bytes": 56098,
+      "size": [
+        384,
+        384
+      ],
+      "sha256": "8868e050d4b33af9246f98a034fa2272e49fc92c5e1bc6406bc4be75d8cdf74f"
+    },
+    "fx/explosion-dorada.webp": {
+      "bytes": 68006,
+      "size": [
+        384,
+        384
+      ],
+      "sha256": "e084467da57d36441b29e6a4c627204a051977e29a0b404aeae25feca505e2ac"
+    },
+    "fx/destello.webp": {
+      "bytes": 45684,
+      "size": [
+        384,
+        384
+      ],
+      "sha256": "027376a334e9137c26987c4565c81be7d88d99a5fd9dfe17d172ee9715d13bb7"
+    },
+    "fx/remolino-magenta.webp": {
+      "bytes": 61608,
+      "size": [
+        384,
+        384
+      ],
+      "sha256": "f7d854bb86e7e689b852b8b0c8253d9d06fa694bd1c32c1ed1126402d77586e5"
+    },
+    "fx/fragmentos.webp": {
+      "bytes": 69992,
+      "size": [
+        384,
+        384
+      ],
+      "sha256": "fc939b7af64f92dbc1342628c56e381520dcb2659d39229db3b548e2caa263ba"
+    },
+    "fx/sello-ceremonial.webp": {
+      "bytes": 60064,
+      "size": [
+        384,
+        384
+      ],
+      "sha256": "d218d9c5d36f18f3b5ba089c522133c4d696be5b523d0786f042c3b2b37ab10d"
+    },
+    "objects/plataforma.webp": {
+      "bytes": 107118,
+      "size": [
+        748,
+        384
+      ],
+      "sha256": "f37f493bc49b66d58cf85d5ddf69e8fc0be54343b1d7db2872649fcdf42b97e7"
+    },
+    "objects/nucleo-berkan.webp": {
+      "bytes": 105468,
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "e83f48cfede43d8f912f4c3aa278024eef05466a5988b240c1bcab1dadfc6269"
+    },
+    "fruit/cereza.webp": {
+      "bytes": 27828,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "acd9a18a55e9bd2b7a21d1d9e01c4f660822d48af0a634a2e178d1ca173693ac"
+    },
+    "fruit/limon.webp": {
+      "bytes": 26018,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "eaf787915188a3c290d82be97f483f561624215bf84c5c0e0df113ed8398fe70"
+    },
+    "fruit/fresa.webp": {
+      "bytes": 28166,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "dc09bea96a77b53dce8350333066597d9336b1329cb63afb673a624d3352a159"
+    },
+    "fruit/naranja.webp": {
+      "bytes": 27030,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "b51f795d99de9ae2443bb9dce686a93baa68b6c695069adc57e680055d0ec13e"
+    },
+    "gems/nivel-01.webp": {
+      "bytes": 14144,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "8cc34c47be7ac907f2f0d380fe6f8d8ef6078301e618daa399e14a89dfb3a9b9"
+    },
+    "gems/nivel-02.webp": {
+      "bytes": 16600,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "911caeb7985cffc17094469939e6d668935d6031fa194c787c780ad7ad8a3d6b"
+    },
+    "gems/nivel-03.webp": {
+      "bytes": 22648,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "5c1662daf85a9ef670c59da96e55862838a707a55446bf481dcec0d6e7432db4"
+    },
+    "gems/nivel-04.webp": {
+      "bytes": 24332,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "45ac476bd5c23b6a9d611faf2731389183a7658cf37bddddd9aab4712b2cd615"
+    },
+    "gems/nivel-05.webp": {
+      "bytes": 18046,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "6a23e26fb886698932b153294d38fb0e2c25b5a88afe21cc94a5d5f8600d54d5"
+    },
+    "gems/nivel-06.webp": {
+      "bytes": 17946,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "a21940eb043ccc3c671080b1b8a2a54d8156c6a479693f5e5b7dea4d00a3f585"
+    },
+    "gems/nivel-07.webp": {
+      "bytes": 21752,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "40f8c1c57f6412f5b5c5aeef6aa1f0cd30cccdac49b44b045bfe28527fc86ff1"
+    },
+    "gems/nivel-08.webp": {
+      "bytes": 25682,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "7e29b0502b2c34e7e7579b64a90678a3d974105bccb51b321b794a2782137485"
+    },
+    "gems/nivel-09.webp": {
+      "bytes": 27236,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "2a7bc855d67f5c86291ccd2a6f5eb12b38e1a371dc71c1c5ac1d907d60183125"
+    },
+    "gems/nivel-10.webp": {
+      "bytes": 27632,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "d36d74bb4a947d00c87b69860033ae3a0cebc39419e309d53a4d2e3db1d18447"
+    },
+    "gems/nivel-11.webp": {
+      "bytes": 29648,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "5dcca8d488c77269cb1489bfe7c554c9c6fd3f4b0817c31f69103b4e86ee9021"
+    },
+    "gems/nivel-12.webp": {
+      "bytes": 31288,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "d7588897adfd288589b91293e5307f3deba6866a9929cebc05a4c4d3c1aba776"
+    },
+    "special/calavera.webp": {
+      "bytes": 30072,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "63d72515ab095f5eb813e0f446b17990a1e5a4729d6e403a6d3d1035616c92ed"
+    },
+    "special/bomba.webp": {
+      "bytes": 29924,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "edd53858adfbd1f925cbb20ac52a394bff85ae455a2749c4b88c65bdb5e32367"
+    },
+    "special/superbola.webp": {
+      "bytes": 29748,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "5da9fffdecddd410d21339e871716c9c3c88db96cab770e433f1fa6c7c886786"
+    },
+    "special/vitalidad.webp": {
+      "bytes": 28514,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "d04b67aafad5da751bab39d9945644f4a35ed670861eaf9920ffafafd34b10a4"
+    },
+    "special/aceleracion.webp": {
+      "bytes": 28334,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "05787665ef2506754fcbc3e7cfae9feecc97bf50e25d2d5757ba110f5660dbd8"
+    },
+    "special/ralentizacion.webp": {
+      "bytes": 27964,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "283b5bc3e8ccd19ee14263506ee44854579611373cac20311b95c6da7efd22e4"
+    },
+    "relics/reliquia-01.webp": {
+      "bytes": 27512,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "47c239fd251a210c6aafdd6f70b482715450f65b678a73730f3ab2603864ad01"
+    },
+    "relics/reliquia-02.webp": {
+      "bytes": 32116,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "a49ba0f68ad8cd0d9471ec10dfc3515541cf799b4fa34313fe4b43a7203556ff"
+    },
+    "relics/reliquia-03.webp": {
+      "bytes": 33524,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "8c4b0a0ff0085e5d4c2ef400911725ef7217712109bd7ed6d00a423452c02bbc"
+    },
+    "relics/reliquia-04.webp": {
+      "bytes": 29962,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "4c35a9935d424ec257792c072c4752eff37f59a90c7e7b7d99c4071064ea18cc"
+    },
+    "relics/reliquia-05.webp": {
+      "bytes": 27784,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "e7db60bd72e18f0cab458f0f526b0ae393ac63feb36303eebd54c41b5f683bf4"
+    },
+    "relics/reliquia-06.webp": {
+      "bytes": 31624,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "93e521f7071e156be1cd534b03f86175b426c61341c9ff376c096539f9729693"
+    },
+    "relics/reliquia-07.webp": {
+      "bytes": 29898,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "38ccce37ee659e20a61205f6822c45ffd8e9c93e8ca8034dc607f421bda904a6"
+    },
+    "relics/reliquia-08.webp": {
+      "bytes": 28686,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "d19f5d4de18bddf7198ee98f50057be6277acfbae41c73f1dcab6514875ab2a2"
+    },
+    "relics/reliquia-09.webp": {
+      "bytes": 32816,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "aed5871960598eb1cb9a39b63910ed7590b5c0952e10fb6d6fb00591a5eadd4a"
+    },
+    "relics/reliquia-10.webp": {
+      "bytes": 28638,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "edafb2196628c1eaa210ab03f08d219f5ab1aad024ce300554af38a911765f40"
+    },
+    "relics/reliquia-11.webp": {
+      "bytes": 34368,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "b4c420f2c6961679ce92d1d6f4f5b80650d4bc40992e94bbb587b6fa5f26cb70"
+    },
+    "relics/reliquia-12.webp": {
+      "bytes": 34804,
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "828bef1da814feea22f1185e10c584bc5be80cc44d58713c99ef23d2330c6972"
+    }
+  }
+}
