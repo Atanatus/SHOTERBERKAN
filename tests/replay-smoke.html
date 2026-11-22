@@ -14,7 +14,7 @@
 </style>
 </head>
 <body>
-<h1>FrutiDry · Pruebas de motor V31</h1>
+<h1>FrutiDry · Pruebas de motor V32</h1>
 <p class="note">Ejecuta el motor real en un marco aislado. No modifica el repositorio ni guarda resultados permanentes.</p>
 <output id="results">Cargando juego…</output>
 <iframe id="game" src="../index.html" title="Motor bajo prueba"></iframe>
@@ -171,6 +171,62 @@ frame.addEventListener('load',()=>{
       traceComplete:data.recording.complete,last:state.traceCheckpoints.at(-1)?.s,
       limitsOK:state.inputLog.length<=25000&&state.actionLog.length<=15000};
   })()`,r=>r.steps===30000&&r.checkpoints===50&&r.last===30000&&r.traceComplete&&r.limitsOK);
+  verify('Reloj fijo · 60 Hz y recuperación limitada a cinco pasos',`(()=>{
+    resetFrameClock();
+    const origin=sampleSimulationClock(1000,true);
+    const one=sampleSimulationClock(1000+1000/60,true);
+    const two=sampleSimulationClock(1000+3*1000/60,true);
+    const limited=sampleSimulationClock(1000+10*1000/60,true);
+    const dropped=timingStats.droppedMs;
+    resetFrameClock();
+    return {origin:origin.steps,one:one.steps,two:two.steps,
+      capped:limited.steps,dropped:dropped>0};
+  })()`,r=>r.origin===0&&r.one===1&&r.two===2&&r.capped===5&&r.dropped);
+  verify('Pestaña suspendida · sin avance al regresar después de 5 segundos',`(()=>{
+    resetFrameClock();
+    sampleSimulationClock(1000,true);
+    sampleSimulationClock(1000+1000/60,true);
+    const idle=sampleSimulationClock(6000,true);
+    const resume=sampleSimulationClock(6000+1000/60,true);
+    resetFrameClock();
+    return {stalled:idle.stalled,steps:idle.steps,resume:resume.steps};
+  })()`,r=>r.stalled&&r.steps===0&&r.resume===1);
+  verify('Códice y cambio de visibilidad · resíncronización sin acumulación',`(()=>{
+    setTab('play');
+    resetFrameClock();
+    sampleSimulationClock(1000,true);
+    sampleSimulationClock(1033.34,true);
+    setTab('vault');
+    const paused=sampleSimulationClock(8000,false);
+    setTab('play');
+    const resumed=sampleSimulationClock(9000,true);
+    const first=sampleSimulationClock(9000+1000/60,true);
+    const old=Object.getOwnPropertyDescriptor(document,'hidden');
+    try{
+      Object.defineProperty(document,'hidden',{configurable:true,value:true});
+      document.dispatchEvent(new Event('visibilitychange'));
+    }finally{
+      if(old)Object.defineProperty(document,'hidden',old);
+      else delete document.hidden;
+    }
+    const visibility=sampleSimulationClock(18000,true);
+    resetFrameClock();
+    return {paused:paused.steps,resumed:resumed.steps,first:first.steps,visibility:visibility.steps};
+  })()`,r=>r.paused===0&&r.resumed===0&&r.first===1&&r.visibility===0);
+  verify('El estado del motor coincide a 60 Hz y 30 Hz renderizando',`(()=>{
+    function run(seed,frames,frameTime){
+      setTab('play');resetGame(seed);resetFrameClock();
+      sampleSimulationClock(1000,true);
+      for(let i=1;i<=frames;i++){
+        const frame=sampleSimulationClock(1000+i*frameTime,true);
+        for(let j=0;j<frame.steps;j++){update();ReplayLab.afterStep();}
+      }
+      return {step:state.simFrame,snapshot:JSON.stringify(ReplayLab.snapshot())};
+    }
+    const a=run(8837,120,1000/60),b=run(8837,60,1000/30);
+    resetFrameClock();
+    return {stepsA:a.step,stepsB:b.step,equal:a.snapshot===b.snapshot};
+  })()`,r=>r.stepsA===120&&r.stepsB===120&&r.equal);
   output.textContent=outcomes.join('\n')+'\n\n'+(outcomes.every(x=>x.startsWith('✓'))?'TODAS LAS PRUEBAS SUPERADAS':'HAY PRUEBAS FALLIDAS');
 });
 </script>

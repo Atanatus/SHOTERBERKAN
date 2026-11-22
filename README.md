@@ -1,3 +1,17 @@
+# FrutiDry — V32 · Temporal Stability
+
+**Base oficial:** `Atanatus/SHOTERBERKAN`, `main` V31 (`124ab04b`).
+
+- Simulación fija a **60 Hz**, separada del render. Se conservan las reglas y el formato del diagnóstico V24–V31 (`schema 2`, `rulesVersion 20`).
+- Máximo de **5 pasos** por frame para recuperarse de bajadas moderadas de FPS. El tiempo adicional se descarta de forma explícita, sin avanzar el juego de golpe.
+- Una interrupción superior a **250 ms** se considera suspensión: el reloj se resincroniza sin simular el tiempo ausente. Al abrir/cerrar el Códice, ocultar/mostrar la pestaña, perder el foco o cambiar la calidad de render también se reinicia el reloj temporal.
+- Los efectos visuales utilizan el tiempo acotado de la simulación, evitando saltos bruscos tras recuperar la pestaña. El panel F3 muestra el número de pausas largas y el tiempo descartado acumulado.
+- Se añaden cuatro pruebas de reloj: frecuencia fija, límite de recuperación, suspensión/visibilidad y equivalencia del estado a 30/60 Hz de render, además de comprobaciones por resolución en Chromium.
+- **Trade-off deliberado:** en dispositivos incapaces de mantener 60 ticks/s, el tiempo de partida puede progresar más despacio que el tiempo real; nunca se acelera súbitamente para compensar. Esto conserva el comportamiento determinista por pasos y evita castigar al jugador por la suspensión del navegador.
+- GitHub Actions sigue ejecutando `tests/browser_qa.py` y `tests/validate_repo.py`. No se añaden dependencias al juego publicado.
+
+---
+
 # FrutiDry — V31 · Stress & Bounded Diagnostics
 
 **Base:** `Atanatus/SHOTERBERKAN`, `main` V30 (`e5ac0dc7`).

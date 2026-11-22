@@ -95,7 +95,7 @@ def run(smoke_only=False, injected=False):
                 text = page.locator('#results').inner_text()
                 assert 'TODAS LAS PRUEBAS SUPERADAS' in text, f'Error en smoke del motor:\n{text}'
                 assert not errors, f'Errores JavaScript: {errors}'
-                print('OK: replay-smoke (12 escenarios)', flush=True)
+                print('OK: replay-smoke (16 escenarios)', flush=True)
                 context.close()
                 if smoke_only:
                     return
@@ -122,7 +122,22 @@ def run(smoke_only=False, injected=False):
                     assert details['canvas'] and details['paused'] and details['resumed'], (w,h,details)
                     assert details['shots']==1 and details['hud'] and details['brand'] and details['cards']==12,(w,h,details)
                     assert not errors,(w,h,errors)
-                    print(f'OK: viewport {w}×{h} · disparo / Códice / 12 reliquias',flush=True)
+                    # The frame clock must never catch up minutes of wall time
+                    # after a tab suspension, and re-entering the Codex clears it.
+                    timing=page.evaluate('''() => {
+                      resetFrameClock();
+                      const start=sampleSimulationClock(1000,true);
+                      const catchup=sampleSimulationClock(1100,true);
+                      const stall=sampleSimulationClock(5100,true);
+                      setTab('vault');setTab('play');
+                      const afterModal=sampleSimulationClock(20000,true);
+                      resetFrameClock();
+                      return {start:start.steps,catchup:catchup.steps,
+                        stall:stall.steps,stalled:stall.stalled,
+                        afterModal:afterModal.steps};
+                    }''')
+                    assert timing=={'start':0,'catchup':5,'stall':0,'stalled':True,'afterModal':0},(w,h,timing)
+                    print(f'OK: viewport {w}×{h} · disparo / Códice / 12 reliquias / reloj fijo',flush=True)
                     if (w,h)==(390,844):
                         result = page.evaluate('''() => {
                           resetGame(888);

@@ -1,21 +1,72 @@
-// V22: 60 Hz fixed-step simulation retained. Rendering stops behind full-screen overlays.
-// Press F3 or use ?debug=1 for a small, low-overhead diagnostic readout.
+// V32: fixed 60 Hz simulation, bounded catch-up and explicit clock resynchronization.
+// No elapsed wall-clock time is replayed after a tab suspension or long stall.
 const perf={visible:new URLSearchParams(location.search).get('debug')==='1',frames:0,steps:0,drawMs:0,drawPeak:0,start:0,fps:0};
-let lastFrame=0,accumulator=0,lastRender=0;
+const FRAME_TIMING=Object.freeze({stepMs:1000/60,maxSteps:5,stallMs:250});
+const timingStats={stalls:0,droppedMs:0,resyncs:0};
+let lastFrame=null,accumulator=0,lastRender=0;
+
+function resetFrameClock(){
+ lastFrame=null;
+ accumulator=0;
+ lastRender=0;
+ timingStats.resyncs++;
+}
+
+// Pure timing policy: decide the number of steps; physics runs independently
+// in loop(). Exported as a global function for deterministic browser QA.
+function sampleSimulationClock(now,active){
+ if(!Number.isFinite(now)){
+   resetFrameClock();
+   return {elapsed:0,steps:0,stalled:true};
+ }
+ if(lastFrame===null){
+   lastFrame=now;
+   return {elapsed:0,steps:0,stalled:false};
+ }
+ const gap=now-lastFrame;
+ lastFrame=now;
+ if(!active){
+   accumulator=0;
+   return {elapsed:0,steps:0,stalled:false};
+ }
+ if(gap<0||gap>FRAME_TIMING.stallMs){
+   timingStats.stalls++;
+   timingStats.droppedMs+=Math.max(0,gap);
+   accumulator=0;
+   return {elapsed:0,steps:0,stalled:true};
+ }
+ // Up to five ticks may be recovered for a slow frame. All additional elapsed
+ // time is intentionally discarded to avoid sudden fast-forward on weak CPUs.
+ const elapsed=Math.min(gap,FRAME_TIMING.stepMs*FRAME_TIMING.maxSteps);
+ timingStats.droppedMs+=gap-elapsed;
+ accumulator+=elapsed;
+ const steps=Math.min(FRAME_TIMING.maxSteps,Math.floor((accumulator+1e-7)/FRAME_TIMING.stepMs));
+ accumulator=Math.max(0,accumulator-steps*FRAME_TIMING.stepMs);
+ return {elapsed,steps,stalled:false};
+}
+
 function loop(now){
- if(!lastFrame)lastFrame=now;
- const elapsed=Math.min(100,Math.max(0,now-lastFrame));lastFrame=now;
  const active=!paused&&!document.hidden&&!state.gameOver;
+ const frame=sampleSimulationClock(now,active);
  let steps=0;
- if(active){accumulator+=elapsed;while(accumulator>=1000/60&&steps<5){update();if(typeof ReplayLab!=='undefined')ReplayLab.afterStep();accumulator-=1000/60;steps++;if(state.gameOver||paused)break;}if(steps===5)accumulator=0;}else accumulator=0;
- if(active){updateAstralFX(elapsed/1000);updateLanePulses(elapsed/1000);updateImpactFX(elapsed/1000);if(!natureMotion.matches)natureTime+=elapsed/1000;}else if(state.gameOver){astralBursts.length=0;lanePulses.length=0;resetImpactFX();}
- AudioEngine.tick(state,!active);
- // The Códice and game-over screens fully cover the canvas: skip needless redraws.
- // Cap rendering to roughly 60 Hz, while keeping the fixed simulation unchanged.
- const shouldDraw=active && (now-lastRender>=1000/60-1 || !lastRender);
+ for(let i=0;i<frame.steps;i++){
+   update();
+   if(typeof ReplayLab!=='undefined')ReplayLab.afterStep();
+   steps++;
+   if(state.gameOver||paused||document.hidden){accumulator=0;break;}
+ }
+ const stillActive=active&&!state.gameOver&&!paused&&!document.hidden;
+ if(stillActive){
+   const delta=frame.elapsed/1000;
+   updateAstralFX(delta);updateLanePulses(delta);updateImpactFX(delta);
+   if(!natureMotion.matches)natureTime+=delta;
+ }else if(state.gameOver){astralBursts.length=0;lanePulses.length=0;resetImpactFX();}
+ AudioEngine.tick(state,!stillActive);
+ // The Códice and game-over overlays fully cover the canvas.
+ const shouldDraw=stillActive && (now-lastRender>=FRAME_TIMING.stepMs-1 || !lastRender);
  if(shouldDraw){
    const start=perf.visible?performance.now():0;
-   draw();lastRender=lastRender ? Math.max(now-1000/60,lastRender+1000/60) : now;
+   draw();lastRender=lastRender ? Math.max(now-FRAME_TIMING.stepMs,lastRender+FRAME_TIMING.stepMs) : now;
    if(perf.visible){const ms=performance.now()-start;perf.frames++;perf.steps+=steps;perf.drawMs+=ms;perf.drawPeak=Math.max(perf.drawPeak,ms);updatePerfPanel(now);}
  }
  requestAnimationFrame(loop);
@@ -28,11 +79,12 @@ function updatePerfPanel(now){
  const dpr=canvas.width/Math.max(1,width);
  perf.sample = {fps:Number((perf.frames/d).toFixed(1)),drawMeanMs:Number((perf.drawMs/Math.max(1,perf.frames)).toFixed(2)),drawPeakMs:Number(perf.drawPeak.toFixed(2)),ticksPerSecond:Number((perf.steps/d).toFixed(1))};
  document.getElementById('debugHud').textContent=[
-  `${GAME_BRAND.name} V28 · ${renderQuality.toUpperCase()} · F3 cerrar`,
+  `${GAME_BRAND.name} V32 · ${renderQuality.toUpperCase()} · F3 cerrar`,
   `FPS render: ${(perf.frames/d).toFixed(1)} / 60`,
   `Render medio: ${(perf.drawMs/Math.max(1,perf.frames)).toFixed(2)} ms`,
   `Render máximo: ${perf.drawPeak.toFixed(2)} ms`,
   `Simulación: ${(perf.steps/d).toFixed(1)} ticks/s`,
+  `Pausas largas: ${timingStats.stalls} · tiempo omitido: ${(timingStats.droppedMs/1000).toFixed(1)} s`,
   `Canvas: ${canvas.width} × ${canvas.height} (${dpr.toFixed(2)}x)`,
   `Partículas: ${state.particles.length} · FX: ${astralBursts.length+lanePulses.length}`,
   `Rutas cacheadas: ${routeCache.size}`
@@ -92,9 +144,11 @@ function setTab(tab) {
   const btnPlay = document.getElementById('btnPlay');
   const btnVault = document.getElementById('btnVault');
   if (tab === 'vault') {
+    resetFrameClock();
     paused=true;clearInput();renderVault(); modal.classList.add('open');
     btnVault.classList.add('active'); btnPlay.classList.remove('active');
   } else {
+    resetFrameClock();
     paused=false;modal.classList.remove('open');if(document.activeElement instanceof HTMLButtonElement)document.activeElement.blur();
     btnPlay.classList.add('active'); btnVault.classList.remove('active');
   }
@@ -139,7 +193,8 @@ musicVolumeInput.addEventListener('input',()=>{
   AudioEngine.setMusicVolume(Number(musicVolumeInput.value)/100);
   syncMusicControls();
 });
-document.addEventListener('visibilitychange',()=>{if(document.hidden)AudioEngine.pauseMusic();});
+document.addEventListener('visibilitychange',()=>{resetFrameClock();if(document.hidden)AudioEngine.pauseMusic();});
+window.addEventListener('blur',resetFrameClock);
 window.addEventListener('keydown',event=>{
   if(event.code!=='KeyM'||event.repeat||event.altKey||event.ctrlKey||event.metaKey)return;
   if(document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName))return;
@@ -160,6 +215,7 @@ qualitySelect.addEventListener('change',()=>{
   renderQuality=qualitySelect.value==='eco'?'eco':'auto';
   STORE.set('kosen_render_quality',renderQuality);
   resize();
+  resetFrameClock();
 });
 const debugHud=document.getElementById('debugHud');
 debugHud.hidden=!perf.visible;
