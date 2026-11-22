@@ -94,6 +94,38 @@ frame.addEventListener('load',()=>{
     finally {width=oldWidth;}
     return {active:state.replayActive,status:document.getElementById('replayStatus').textContent};
   })()`,r=>!r.active&&r.status.includes('tamaño del tablero modificado'));
+  verify('Checkpoints periódicos detectan divergencia en paso 600',`(()=>{
+    setTab('play');resetGame(2901);
+    for(let i=0;i<760;i++){update();ReplayLab.afterStep();}
+    const data=ContinuityLab.captureRun();
+    const positions=data.checkpoints.map(c=>c.s);
+    data.checkpoints[0].state.score+=7;
+    ReplayLab.begin(data);
+    for(let i=0;i<data.stats.simFrame&&state.replayActive;i++){
+      update();ReplayLab.afterStep();
+    }
+    return {positions,active:state.replayActive,status:document.getElementById('replayStatus').textContent};
+  })()`,r=>r.positions.join(',')==='600'&&!r.active&&r.status.includes('checkpoint en paso 600'));
+  verify('Diagnósticos V24 sin checkpoints siguen funcionando',`(()=>{
+    setTab('play');resetGame(2902);
+    for(let i=0;i<620;i++){update();ReplayLab.afterStep();}
+    const data=ContinuityLab.captureRun();
+    delete data.checkpoints;
+    ReplayLab.begin(data);
+    for(let i=0;i<data.stats.simFrame&&state.replayActive;i++){
+      update();ReplayLab.afterStep();
+    }
+    return {active:state.replayActive,status:document.getElementById('replayStatus').textContent};
+  })()`,r=>!r.active&&r.status.includes('VERIFICADO'));
+  verify('Rechazo de checkpoints desordenados',`(()=>{
+    setTab('play');resetGame(2903);
+    for(let i=0;i<1250;i++){update();ReplayLab.afterStep();}
+    const data=ContinuityLab.captureRun();
+    data.checkpoints.reverse();
+    let rejected=false;
+    try{ReplayLab.validate(data);}catch(e){rejected=e.message.includes('periódico inválido');}
+    return {count:data.checkpoints.length,rejected};
+  })()`,r=>r.count===2&&r.rejected);
   output.textContent=outcomes.join('\n')+'\n\n'+(outcomes.every(x=>x.startsWith('✓'))?'TODAS LAS PRUEBAS SUPERADAS':'HAY PRUEBAS FALLIDAS');
 });
 </script>

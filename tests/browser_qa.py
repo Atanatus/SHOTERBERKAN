@@ -95,7 +95,7 @@ def run(smoke_only=False, injected=False):
                 text = page.locator('#results').inner_text()
                 assert 'TODAS LAS PRUEBAS SUPERADAS' in text, f'Error en smoke del motor:\n{text}'
                 assert not errors, f'Errores JavaScript: {errors}'
-                print('OK: replay-smoke (5 escenarios)', flush=True)
+                print('OK: replay-smoke (8 escenarios)', flush=True)
                 context.close()
                 if smoke_only:
                     return

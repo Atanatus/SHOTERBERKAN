@@ -3,7 +3,8 @@
 const ReplayLab = (() => {
   const output=document.getElementById('replayStatus');
   const fileInput=document.getElementById('replayFile');
-  let trace=null, actionAt=0, inputAt=0, applying=false, lastInput=null;
+  let trace=null, actionAt=0, inputAt=0, checkpointAt=0, applying=false, lastInput=null;
+  const CHECKPOINT_INTERVAL=600; // one semantic snapshot every ten simulated seconds
   const MAX_STEPS=60*60*60; // one hour of simulation; guard against unbounded uploads
   function isApplying(){return applying;}
   // Each ritual owns its own input-delta baseline. Without this, a repeated
@@ -43,6 +44,15 @@ const ReplayLab = (() => {
       last=i.s;
     }
     if(raw.actions.some(a=>a.s===raw.stats.simFrame))throw Error('Acciones posteriores al checkpoint');
+    // Periodic checkpoints are optional so exports from V24–V28 still replay.
+    if(raw.checkpoints!==undefined){
+      if(!Array.isArray(raw.checkpoints)||raw.checkpoints.length>Math.floor(raw.stats.simFrame/CHECKPOINT_INTERVAL))throw Error('Cantidad de checkpoints inválida');
+      let prior=0;
+      for(const cp of raw.checkpoints){
+        if(!cp||!Number.isSafeInteger(cp.s)||cp.s<=prior||cp.s>raw.stats.simFrame||cp.s%CHECKPOINT_INTERVAL!==0||!cp.state||Array.isArray(cp.state)||typeof cp.state!=='object'||cp.state.simFrame!==cp.s)throw Error('Checkpoint periódico inválido');
+        prior=cp.s;
+      }
+    }
     return raw;
   }
   function begin(raw){
@@ -50,7 +60,7 @@ const ReplayLab = (() => {
     // This call cannot grant permanent rewards, even if the imported file claims otherwise.
     resetGame(data.seed);
     state.replayActive=true;state.replayData={steps:data.stats.simFrame};
-    trace=data;actionAt=0;inputAt=0;lastInput=null;
+    trace=data;actionAt=0;inputAt=0;checkpointAt=0;lastInput=null;
     setTab('play');
     status(`▶ REPLAY · ${data.seed} · paso 0/${data.stats.simFrame}`);
     showToast('▶ REPRODUCCIÓN LOCAL · SIN RÉCORD');
@@ -107,7 +117,17 @@ const ReplayLab = (() => {
     }catch(e){stop('REPLAY DIVERGENTE: '+e.message,true);return false;}
   }
   function afterStep(){
-    if(!state.replayActive||!trace)return;
+    if(!state.replayActive){
+      // Cheap, opt-in-by-default semantic tracing. No particles, audio or layout.
+      // A reset initializes the array before a new run can produce snapshots.
+      if(state.simFrame>0&&state.simFrame%CHECKPOINT_INTERVAL===0 &&
+         state.traceCheckpoints && state.traceCheckpoints.length<MAX_STEPS/CHECKPOINT_INTERVAL &&
+         state.traceCheckpoints.at(-1)?.s!==state.simFrame){
+        state.traceCheckpoints.push({s:state.simFrame,state:snapshot()});
+      }
+      return;
+    }
+    if(!trace)return;
     if(width!==trace.viewport.width||height!==trace.viewport.height){
       stop(`✕ REPLAY DETENIDO · tamaño del tablero modificado (${width}×${height})`,true);
       return;
@@ -117,6 +137,17 @@ const ReplayLab = (() => {
     if(state.gameOver && state.simFrame<trace.stats.simFrame){
       stop(`✕ REPLAY DIVERGENTE · partida terminada en paso ${state.simFrame}/${trace.stats.simFrame}`,true);
       return;
+    }
+    // Fail at the earliest known divergence instead of only at the final state.
+    const periodic=trace.checkpoints||[];
+    if(checkpointAt<periodic.length&&periodic[checkpointAt].s===state.simFrame){
+      const expectedPeriodic=periodic[checkpointAt++].state;
+      const actualPeriodic=snapshot();
+      if(JSON.stringify(actualPeriodic)!==JSON.stringify(expectedPeriodic)){
+        const fields=Object.keys(expectedPeriodic).filter(k=>JSON.stringify(actualPeriodic[k])!==JSON.stringify(expectedPeriodic[k])).slice(0,5).join(', ');
+        stop(`✕ REPLAY DIVERGENTE · checkpoint en paso ${state.simFrame} · campos: ${fields}`,true);
+        return;
+      }
     }
     if(state.simFrame<trace.stats.simFrame)return;
     const actual=snapshot(),expected=trace.checkpoint;

@@ -445,7 +445,7 @@ function resetGame(testSeed = null) {
   state.arrowAngle = 0;
   state.aimAngle = 0;
   state.score = 0;
-  state.actionLog = []; state.inputLog = []; state.simFrame=0;state.replayActive=false;state.replayData=null;
+  state.actionLog = []; state.inputLog = []; state.traceCheckpoints = []; state.simFrame=0;state.replayActive=false;state.replayData=null;
   if (typeof ReplayLab !== 'undefined') ReplayLab.resetRecording();
   state.milestoneIndex = 0;
   state.envIndex = 0;

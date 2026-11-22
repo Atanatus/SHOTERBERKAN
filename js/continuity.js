@@ -124,6 +124,9 @@ const ContinuityLab = (() => {
       ammo:{current:compactPiece(state.nextPiece),reserve:compactPiece(state.upcomingPiece)},
       actions:state.actionLog.map(entry=>({...entry})),
       inputs:state.inputLog.map(entry=>({...entry})),
+      // Optional periodic V29 checkpoints. Old schema-2 diagnostics without this
+      // field remain compatible with V24 rules and the final-state verifier.
+      checkpoints:(state.traceCheckpoints || []).map(entry=>({s:entry.s,state:entry.state})),
       checkpoint:typeof ReplayLab!=='undefined'?ReplayLab.snapshot():null,
       measuredPerformance:perf.sample ?? null,
       limitations:'Replay verification requires exact V24 rules and matching logical viewport; not an anti-cheat, ranking proof or cross-browser guarantee.'

@@ -97,3 +97,11 @@ En un entorno con política que impide abrir `localhost` o `file://` desde Chrom
 - Arte, mecánicas, núcleo BERKAN, 12 reliquias y claves de datos históricos: intactos.
 - Pruebas de marca añadidas a validación estática y QA de navegador.
 - Runner GitHub Actions fijado a Ubuntu 24.04 para compatibilidad con Chromium de Playwright 1.56.0.
+
+## V29 · Checkpoints periódicos de reproducción
+
+- Cada **600 pasos simulados** (10 segundos nominales de juego) se captura un estado semántico que incluye tablero, munición, RNG, puntuación y estado del proyectil. No incluye partículas ni audio.
+- La exportación diagnóstica añade el campo opcional `checkpoints` al **schema 2 existente**. Los diagnósticos V24–V28 sin ese campo siguen reproduciéndose igual. No se modifican las reglas V20 ni las claves `localStorage`.
+- El verificador compara cada checkpoint en orden y detiene la reproducción en el **primer paso divergente conocido**, sin esperar a terminar toda la partida. Este resultado **no es una prueba antitrampas**.
+- Máximo de **360 checkpoints** por partida en el registro local (una hora de simulación); no altera los límites de importación existentes.
+- El laboratorio incorpora pruebas de detección de una divergencia intermedia, compatibilidad histórica y rechazo de checkpoints desordenados.
