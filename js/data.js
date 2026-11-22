@@ -1,16 +1,5 @@
-function createPRNG(seed) {
-  let s = (seed >>> 0) || 1;
-  let calls = 0;
-  const random = function() {
-    calls++;
-    let t = s += 0x6D2B79F5;
-    t = Math.imul(t ^ t >>> 15, t | 1);
-    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-  random.inspect = () => ({state:s>>>0,calls});
-  return random;
-}
+// Single RNG implementation shared with the Node.js verifier.
+const createPRNG = FrutiDrySimulation.createPRNG;
 
 async function sha256(message) {
   const msgBuffer = new TextEncoder().encode(message);

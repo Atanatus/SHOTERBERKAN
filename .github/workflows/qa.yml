@@ -25,6 +25,8 @@ jobs:
         run: node --test tests/paypal-payouts.test.mjs
       - name: Permanent accounts and REST authentication contract tests
         run: node --test tests/account-api.test.mjs
+      - name: Shared deterministic RNG, circuit geometry and viewport contracts
+        run: node --test tests/simulation-core.test.mjs
       - name: Server-owned run sessions and unverified diagnostic intake
         run: node --test tests/run-intake.test.mjs
       - name: Web account contract and API transport tests

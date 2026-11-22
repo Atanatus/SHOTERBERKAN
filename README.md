@@ -1,3 +1,14 @@
+# FrutiDry V43 · Deterministic core extraction, stage 1 (no scoring authority)
+
+- Shared classic-script `js/simulation-core.js` runs identically under file://, HTTP and Node.js, without DOM, Canvas or external packages.
+- Migrates the existing RNG and circuit route/slot geometry into ONE implementation consumed by the browser and testable by the backend.
+- `node --test tests/simulation-core.test.mjs` checks exact V42 compatibility. GitHub Actions will run it alongside the existing 20+ replay scenarios.
+- **Not a headless full-game verifier:** projectiles, merges, scoring and game-over still live in `js/game.js`.
+- **No XP, leaderboard, cash tournaments, payments or live API are enabled.** Do not use this module to certify a player's score.
+- Next task: move update/impact/score state transitions into a headless deterministic reducer and compare full traces before enabling atomic XP awards.
+
+---
+
 # FrutiDry V42 · Ingesta de partidas con verificación pendiente (NO XP)
 
 - Nuevo contrato de sesiones creado por el servidor y recepción única de diagnósticos ligados a identidad, semilla, versión de reglas y resolución lógica. Se rechazan duplicados, informes fuera de plazo y campos de recompensa suministrados por el navegador.

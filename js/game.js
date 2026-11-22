@@ -221,33 +221,28 @@ function generateProceduralScene(seedBase, envIdx) {
   };
 }
 
+// Pure route geometry now belongs to the shared deterministic core.
+// No gameplay values, RNG call order, or logical viewport defaults change.
 function generateProceduralRoute(milestoneIdx) {
-  const rSeed = (state.seed ^ ((milestoneIdx + 1) * 0x9e3779b9)) >>> 0;
-  const rng = createPRNG(rSeed);
-  const mode = Math.floor(rng() * 4);
-  const freqA = 1 + Math.floor(rng() * 2);
-  const freqB = 1 + Math.floor(rng() * 2);
-  const ampY = milestoneIdx === 0 ? 0.36 : (0.44 + rng() * 0.3);
-  const laneCount = milestoneIdx === 0 ? 2 : (milestoneIdx % 2 === 1 ? 3 : 2);
-  const laneSpacingY = laneCount === 3 ? 42 : 52;
-  const dir = rng() > 0.5 ? 1 : -1;
-  const baseSpeed = [0.0035,0.0044,0.0054,0.0065,0.0077,0.0090][Math.min(5,milestoneIdx)];
-  const speed = baseSpeed * dir;
-  return { mode, freqA, freqB, ampY, laneCount, laneSpacingY, speed };
+  return FrutiDrySimulation.generateProceduralRoute(state.seed, milestoneIdx);
 }
 
 function getLaneOffsetY(laneIndex, laneCount, spacingY) {
-  const centerIdx = (laneCount - 1) / 2;
-  return (laneIndex - centerIdx) * spacingY;
+  return FrutiDrySimulation.getLaneOffsetY(laneIndex, laneCount, spacingY);
 }
 
+// Reuse geometry object: high-frequency slot queries must not allocate each time.
+const simulationGeometryView = {cx, cy, trackHalfSpan, slotRadius, trackHeight};
+function simulationGeometry() {
+  simulationGeometryView.cx = cx;
+  simulationGeometryView.cy = cy;
+  simulationGeometryView.trackHalfSpan = trackHalfSpan;
+  simulationGeometryView.slotRadius = slotRadius;
+  simulationGeometryView.trackHeight = trackHeight;
+  return simulationGeometryView;
+}
 function evalLaneAt(u, laneIndex = 0) {
-  const rp = state.routeParams || {mode:0,laneCount:2,freqA:1};
-  const x = cx + (u - .5)*2*trackHalfSpan;
-  const gap = slotRadius * 2.55;
-  const offset = (laneIndex-(rp.laneCount-1)/2)*gap;
-  const wave = rp.mode===0 ? Math.sin(u*Math.PI*2) : rp.mode===1 ? Math.sin(u*Math.PI*2+Math.PI/3) : rp.mode===2 ? Math.cos(u*Math.PI*2) : Math.sin(u*Math.PI*4)*.7;
-  return {x,y:cy+offset+wave*trackHeight*.24};
+  return FrutiDrySimulation.evalLaneAt(u, laneIndex, simulationGeometry(), state.routeParams);
 }
 
 function getSlotLane(index) {
@@ -256,15 +251,7 @@ function getSlotLane(index) {
 }
 
 function getSlotWorldPos(index, phase = state.trackPhase) {
-  const laneCount = state.routeParams ? state.routeParams.laneCount : 2;
-  const laneIndex = getSlotLane(index);
-  const perLaneCount = Math.ceil(NUM_SLOTS / laneCount);
-  const posInLane = Math.floor(index / laneCount);
-  const spacing = 1 / perLaneCount;
-  const laneDir = laneIndex % 2 === 1 ? -1 : 1;
-  const rawU = (phase * laneDir + posInLane * spacing + laneIndex * 0.17) % 1;
-  const u = rawU < 0 ? rawU + 1 : rawU;
-  return evalLaneAt(u, laneIndex);
+  return FrutiDrySimulation.getSlotWorldPos(index, phase, simulationGeometry(), state.routeParams, NUM_SLOTS);
 }
 
 function createFruitSlot(fruitObj) {
