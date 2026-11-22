@@ -1,3 +1,13 @@
+# FrutiDry V40 · Cuenta permanente y API inicial (sin torneos activos)
+
+- Se incorpora un backend REST **separado** en `server/` preparado para Firebase Authentication + MongoDB Atlas, sin endpoints que acepten XP, puntuaciones o premios enviados desde el navegador.
+- `GET /api/v1/me` devuelve un perfil propio derivado de identidad verificada por Firebase Admin; las cuentas nacen con XP 0/nivel 1. El acceso al torneo con dinero permanece cerrado.
+- La progresión matemática está marcada como **provisional**; no existe aún concesión de XP ni login de interfaz conectado.
+- Pruebas de API con identidad y persistencia simuladas: `node --test tests/account-api.test.mjs`. El servidor externo no está desplegado.
+- Instrucciones de configuración, contrato de API y barreras en `docs/ACCOUNTS_AND_PROGRESSION.md`.
+
+---
+
 # FrutiDry — V37 · Torneos semanales (fase preparatoria)
 
 **Base oficial:** `Atanatus/SHOTERBERKAN`, `main` V35 (`1795c83a4656408065d7670754f507e1dc5d68fc`).

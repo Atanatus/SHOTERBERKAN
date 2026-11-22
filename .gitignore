@@ -17,3 +17,13 @@ coverage/
 # Operación privada de torneos (nunca publicar en Pages)
 /ops/drafts/
 /ops/previews/
+
+# Credenciales privadas: nunca versionar en GitHub Pages ni en la API
+.env
+.env.*
+!.env.example
+**/secrets/
+*service-account*.json
+*credentials*.json
+*.pem
+*.key

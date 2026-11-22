@@ -23,6 +23,8 @@ jobs:
         run: node --test tests/tournament-operations.test.mjs
       - name: PayPal Payouts draft and settlement status tests
         run: node --test tests/paypal-payouts.test.mjs
+      - name: Permanent accounts and REST authentication contract tests
+        run: node --test tests/account-api.test.mjs
 
   browser:
     runs-on: ubuntu-24.04
