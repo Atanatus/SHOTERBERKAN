@@ -109,21 +109,9 @@ document.getElementById('goRecordName').addEventListener('input', (e) => {
   el.addEventListener('keydown', (e) => e.stopPropagation());
 });
 
-function isBoardFigure(s) {
-  return Boolean(s && !s.isBomb && !s.isSkull && !s.isSuperballNode);
-}
-
-function isTargetFruit(s) {
-  return Boolean(isBoardFigure(s) && s.kind === 'fruit' && s.fruit);
-}
-
-function arePiecesEqualForMerge(a, b) {
-  if (!isBoardFigure(a) || !isBoardFigure(b)) return false;
-  if (a.kind === 'fruit' || b.kind === 'fruit') {
-    return a.kind === 'fruit' && b.kind === 'fruit' && a.fruit && b.fruit && a.fruit.id === b.fruit.id;
-  }
-  return a.level === b.level;
-}
+function isBoardFigure(s) { return FrutiDrySimulation.isBoardFigure(s); }
+function isTargetFruit(s) { return FrutiDrySimulation.isTargetFruit(s); }
+function arePiecesEqualForMerge(a,b) { return FrutiDrySimulation.arePiecesEqualForMerge(a,b); }
 
 function getPieceColor(piece) {
   if (!piece) return THEME.cyan;
@@ -146,16 +134,7 @@ function getPieceLabel(piece) {
   return String(piece.level);
 }
 
-function getHighestBoardLevel() {
-  let maxLvl = 1;
-  for (let s of state.slots) {
-    if (isBoardFigure(s) && s.level > maxLvl) {
-      maxLvl = s.level;
-    }
-  }
-  if (state.centerLevel && state.centerLevel > maxLvl) maxLvl = state.centerLevel;
-  return maxLvl;
-}
+function getHighestBoardLevel() { return FrutiDrySimulation.getHighestBoardLevel(state.slots,state.centerLevel); }
 
 function initZenBackground() {
   state.waterfallStreams = [];
@@ -313,39 +292,7 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 
-function nextRandomPiece() {
-  const normal = level=>({level,kind:'normal',fruit:null});
-  const special = (kind,level=1)=>({level,kind,fruit:null});
-  const fruit = f=>({level:1,kind:'fruit',fruit:{...f}});
-  const pick = arr=>arr[Math.floor(state.rng()*arr.length)];
-  const levels=state.slots.filter(s=>isBoardFigure(s)&&s.kind==='normal'&&s.level<TARGET_CORE_LEVEL).map(s=>s.level);
-  const fruits=state.slots.filter(isTargetFruit).map(s=>s.fruit);
-  const free=state.slots.filter(s=>s===null).length;
-  const queued=state.nextPiece;
-  state.shotsSinceSpecial++;
-  state.healDrought=state.shieldIntegrity<=2?state.healDrought+1:0;
-  const roll=state.rng();
-  if(state.shieldIntegrity<MAX_SHIELD && queued?.kind!=='heal' &&
-    ((state.shieldIntegrity<=2&&state.healDrought>=5)||(state.shotsSinceSpecial>=3&&roll<(state.shieldIntegrity<=2?.22:.10)))){
-    state.healDrought=0;state.shotsSinceSpecial=0;return special('heal');
-  }
-  if(state.shotsSinceSpecial>=4 && roll<.24 && state.milestoneIndex>=1){
-    const pool=state.tempoTimer>0?['supercharger']:['supercharger','accel','slow'];
-    state.shotsSinceSpecial=0;
-    return special(pick(pool),Math.min(5,Math.max(1,getHighestBoardLevel())));
-  }
-  // A compact board receives only matching ordinary ammunition when possible.
-  if(fruits.length && (!levels.length||roll<.28)){
-    const different=fruits.filter(f=>queued?.kind!=='fruit'||queued.fruit?.id!==f.id);
-    return fruit(pick(different.length?different:fruits));
-  }
-  if(levels.length && (free<=1||roll<.88)){
-    const different=levels.filter(l=>queued?.kind!=='normal'||queued.level!==l);
-    return normal(pick(different.length?different:levels));
-  }
-  if(free<=1 && fruits.length)return fruit(pick(fruits));
-  return normal(free>1&&state.milestoneIndex>0&&roll>.95?2:1);
-}
+function nextRandomPiece() { return FrutiDrySimulation.nextRandomPiece(state,TARGET_CORE_LEVEL,MAX_SHIELD); }
 
 function settleAmmo(){
   if(!state.pendingAmmo||state.chain||state.projectile||state.gameOver)return;
@@ -970,32 +917,23 @@ function updateZenBackground() {
 
 function projectileSpeed(){return Math.max(12,Math.min(27,height*.041));}
 function intersection(ax,ay,bx,by,x,y,r){
- const dx=bx-ax,dy=by-ay,fx=ax-x,fy=ay-y,c=fx*fx+fy*fy-r*r;
- if(c<=0)return 0;const a=dx*dx+dy*dy;if(a<1e-9)return Infinity;const b=fx*dx+fy*dy,d=b*b-a*c;if(d<0)return Infinity;const t=(-b-Math.sqrt(d))/a;return t>=0&&t<=1?t:Infinity;
+ return FrutiDrySimulation.intersection(ax,ay,bx,by,x,y,r);
 }
+// View reuses the V43 geometry object. Side effects remain in the browser only.
+function simulationWorld() {
+ const view=simulationGeometry();
+ view.width=width;
+ view.coreTargetRadius=coreTargetRadius;
+ view.centerLevel=state.centerLevel;
+ view.routeParams=state.routeParams;
+ view.numSlots=NUM_SLOTS;
+ return view;
+}
+function trackSimulationShot(p){if(p===state.projectile)trackShotFX(p);}
 function advanceProjectile(p,phase){
- let left=1; const pad=slotRadius*.85;
- // Broad-phase: all slot hitboxes are enclosed by this conservative band.
- // Only skip the per-slot checks when the whole shot segment lies outside it.
- // This does not change the narrow-phase intersection algorithm or target priority.
- const lanes=state.routeParams?.laneCount??2;
- const bandRadius=(lanes-1)*slotRadius*2.55*.5+trackHeight*.24+slotRadius*1.04+1e-6;
- const bandMin=cy-bandRadius,bandMax=cy+bandRadius;
- for(let segment=0;segment<3&&left>1e-6;segment++){
-  const ax=p.x,ay=p.y;const wall=p.vx<0?pad:width-pad;
-  const wtime=p.vx? (wall-ax)/p.vx:Infinity;
-  const bounce=wtime>=0&&wtime<left;const dt=bounce?wtime:left;
-  const bx=ax+p.vx*dt,by=ay+p.vy*dt;let best=Infinity,hit=null;
-  if(Math.max(ay,by)>=bandMin && Math.min(ay,by)<=bandMax){
-    for(let i=0;i<NUM_SLOTS;i++){const pos=getSlotWorldPos(i,phase);const t=intersection(ax,ay,bx,by,pos.x,pos.y,slotRadius*1.04);if(t<best){best=t;hit={type:'slot',index:i};}}
-  }
-  if(state.centerLevel!==null){const t=intersection(ax,ay,bx,by,cx,cy,coreTargetRadius);if(t<best){best=t;hit={type:'core'};}}
-  if(by<12){const t=(12-ay)/(by-ay);if(t>=0&&t<best){best=t;hit={type:'miss'};}}
-  if(hit){p.x=ax+(bx-ax)*best;p.y=ay+(by-ay)*best;if(p===state.projectile)trackShotFX(p);return hit;}
-  p.x=bx;p.y=by;if(p===state.projectile)trackShotFX(p);left-=dt;if(bounce)p.vx=-p.vx;else break;
- }
- return null;
+ return FrutiDrySimulation.advanceProjectile(p,phase,simulationWorld(),trackSimulationShot);
 }
+
 function drawPrediction(x,y,color,piece){
  const p={x,y,vx:Math.sin(state.aimAngle)*projectileSpeed(),vy:-Math.cos(state.aimAngle)*projectileSpeed()};
  let phase=state.trackPhase,tempo=state.tempoMult,timer=state.tempoTimer,hit=null;

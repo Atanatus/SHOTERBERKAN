@@ -1,3 +1,12 @@
+# FrutiDry V44 · Extracción determinista (fase 2; sin XP ni puntuación certificada)
+
+- El mismo `js/simulation-core.js` ahora implementa criterios de fusión, generación de munición, intersección y avance de proyectiles (rebotes e impactos), además de PRNG y circuitos de V43.
+- `js/game.js` delega estos cálculos manteniendo las firmas del arcade. Los efectos visuales siguen siendo un observador sin autoridad.
+- `node --test tests/simulation-stage2.test.mjs` compara resultados con implementaciones congeladas de V43, incluidas secuencias de RNG y trayectorias prolongadas, para detectar cambios de física o probabilidad.
+- **No hay motor de partida completo en Node.js.** Faltan transición integral de impactos/fusiones/puntuación, game-over y replay autoritativo. El servidor no concede XP, ni posiciones ni premios.
+
+---
+
 # FrutiDry V43 · Deterministic core extraction, stage 1 (no scoring authority)
 
 - Shared classic-script `js/simulation-core.js` runs identically under file://, HTTP and Node.js, without DOM, Canvas or external packages.

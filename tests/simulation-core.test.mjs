@@ -83,7 +83,8 @@ test('slot positions are bit-identical for routes, phases and viewports', () => 
 });
 test('core has no DOM dependency, no side effects, and exports only immutable API', () => {
   assert(Object.isFrozen(Sim));
-  assert.deepEqual(Object.keys(Sim).sort(),['createPRNG','evalLaneAt','generateProceduralRoute','getLaneOffsetY','getSlotWorldPos'].sort());
+  assert.deepEqual(Object.keys(Sim).sort(),['createPRNG','evalLaneAt','generateProceduralRoute','getLaneOffsetY','getSlotWorldPos',
+    'isBoardFigure','isTargetFruit','arePiecesEqualForMerge','getHighestBoardLevel','nextRandomPiece','intersection','advanceProjectile'].sort());
   assert.equal(typeof document,'undefined');
   assert.deepEqual(Sim.getLaneOffsetY(2,3,42),42);
 });
