@@ -77,6 +77,7 @@ async function fetchPrivateAccount({apiBaseUrl, token, fetchImpl=fetch, signal}=
 function friendlyAccountError(error) {
   if (error instanceof AccountApiError) {
     if (error.status===401) return 'Sesión caducada o revocada. Vuelve a acceder.';
+    if (error.status===403 && error.code==='EMAIL_VERIFICATION_REQUIRED') return 'Verifica el correo electrónico antes de competir.';
     if (error.status===403) return 'Este origen no está autorizado en el servidor.';
     if (error.status===503) return 'El servidor de cuentas no está disponible. El juego sigue operativo.';
     return 'No se pudo consultar la cuenta. Inténtalo de nuevo.';

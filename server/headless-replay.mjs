@@ -9,7 +9,8 @@ import {performance} from 'node:perf_hooks';
 import {inspectDiagnostic, RUN_LOGICAL_VIEWPORT} from './run-intake.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const FILES = ['js/config.js', 'js/simulation-core.js', 'js/data.js', 'js/game.js', 'js/continuity.js', 'js/replay.js'];
+// Match the classic-script load order of index.html: game.js uses FrutiDryViewport.
+const FILES = ['js/config.js', 'js/simulation-core.js', 'js/competitive-viewport.js', 'js/data.js', 'js/game.js', 'js/continuity.js', 'js/replay.js'];
 const SCRIPTS = FILES.map(name => new Script(readFileSync(resolve(ROOT, name), 'utf8'), {filename: name}));
 const BOOT = new Script('resize(); resetGame(__seed);', {filename: 'headless-boot.js'});
 const STEP = new Script('update(); ReplayLab.afterStep();', {filename: 'headless-step.js'});
@@ -46,7 +47,7 @@ function makeContext(viewport) {
   const noOp = ()=>{};
   const audio=new Proxy({}, {get(){return noOp;}});
   const sandbox={
-    document, crypto:webcrypto, matchMedia:()=>({matches:false}),
+    document, crypto:webcrypto, URLSearchParams, location:{search:''}, matchMedia:()=>({matches:false}),
     innerWidth:viewport.width,innerHeight:viewport.height,devicePixelRatio:1,
     addEventListener:noOp, setTimeout:()=>1,clearTimeout:noOp,
     HTMLInputElement:class HTMLInputElement{},HTMLButtonElement:class HTMLButtonElement{},

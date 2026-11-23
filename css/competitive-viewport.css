@@ -1,0 +1,25 @@
+/* V48: QA-only fixed logical viewport. All overlays and advertisements stay separate. */
+#gameCanvas.competitive-preview-canvas {
+  flex: 0 0 auto;
+  max-width: none;
+  max-height: none;
+  box-shadow: 0 0 0 1px rgba(255, 206, 120, .75), 0 8px 32px rgba(0, 0, 0, .4);
+}
+#competitivePreviewNotice[hidden] { display: none !important; }
+#competitivePreviewNotice {
+  position: absolute;
+  z-index: 17;
+  bottom: 7px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 10px);
+  padding: 5px 10px;
+  background: rgba(31, 17, 45, .95);
+  border: 1px solid #e5b86e;
+  color: #ffefc3;
+  font: 800 10px/1.4 system-ui, sans-serif;
+  text-align: center;
+  letter-spacing: .35px;
+  pointer-events: none;
+  white-space: nowrap;
+}

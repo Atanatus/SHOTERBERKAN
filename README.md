@@ -306,3 +306,20 @@ El diseño técnico, la separación servidor/cliente, los riesgos legales y la e
 - Todos los resultados y reintentos conservan `xpGranted: 0`, `ranked: false` y `eligibleForPrizes: false`. Un replay consistente sigue sin demostrar que el jugador sea humano.
 - 13 pruebas de aislamiento, colas, timeout, fraude de respuesta, CAS, recuperación de leases y almacenamiento; GitHub Actions ejecutará esas pruebas además de las regresiones existentes.
 - Documentación de contrato, riesgos restantes y ejemplo de uso interno: [`docs/ISOLATED_VERIFICATION_V47.md`](docs/ISOLATED_VERIFICATION_V47.md).
+
+## V48 · Tablero competitivo lógico, SOLO previsualización
+
+- `?competitivePreview=1` activa un ensayo visible de tablero **390 × 844 lógico** con letterboxing en móvil y escritorio; esta opción de URL no autoriza una partida oficial. La partida normal sigue usando dimensiones físicas dinámicas.
+- `js/competitive-viewport.js` contiene escalado y transformación de eventos de puntero, reutilizable por navegador y Node.js; `css/competitive-viewport.css` aplica únicamente la presentación del modo de prueba.
+- El Canvas se escala visualmente, no se alteran las reglas físicas: el replay conserva `rulesVersion:20`, `gameVersion:24` y `RUN_LOGICAL_VIEWPORT` del servidor.
+- **No se activa:** sesión competitiva, envío de diagnósticos, premios, XP, clasificación ni publicidad. La preview fuerza modo laboratorio (`practiceSeed`) y no altera récords ni reliquias locales. El backend debe emitir y verificar la sesión, nunca confiar en `?competitivePreview=1`.
+- QA: `node --test tests/competitive-viewport.test.mjs`; en CI, `python tests/viewport-browser-qa.py`, cuatro resoluciones y modo normal.
+- Manual: [`docs/COMPETITIVE_VIEWPORT_V48.md`](docs/COMPETITIVE_VIEWPORT_V48.md).
+
+## V49 · Verificación de correo para la beta cerrada (sin Render activo)
+
+- `js/account-verification.js`: flujo aislado y probado de envío, límite UX de 60 segundos entre solicitudes y recarga del usuario/token al confirmar. El SDK oficial se carga solo al habilitar cuentas. No se envía ningún correo mientras `enabled:false`.
+- `index.html`, `js/account-ui.js`, `css/account.css`: aviso para cuentas autenticadas con correo no confirmado, envío manual y comprobación. El perfil puede consultarse antes de verificar el correo; no se confunde autenticación con email confirmado.
+- `server/account-http.mjs`: exige el claim `email_verified === true` de un ID token validado por Firebase Admin para iniciar o entregar partidas (`POST /api/v1/runs` y `POST /api/v1/runs/:id/diagnostic`). Esto no abre rutas desactivadas ni concede XP. `GET /api/v1/me` solo requiere token válido, como antes.
+- Pruebas sin credenciales: `tests/account-email-verification.test.mjs` y `tests/account-verification-browser-qa.py`. Se mantienen `js/account-config.js` y la conexión a Render desactivados.
+- Riesgos/activación: `docs/EMAIL_VERIFICATION_V49.md`. La protección frente a automatización, las invitaciones fuertes y los requisitos legales siguen pendientes.

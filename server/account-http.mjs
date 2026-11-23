@@ -85,6 +85,11 @@ export function createAccountApi({verifyToken, accountStore, allowedOrigins, now
       return send(401, {error: 'INVALID_OR_REVOKED_TOKEN'});
     }
     if (isRunRoute) {
+      // Firebase Admin already verified the ID token and checked revocation.
+      // Never trust a client flag or persisted profile field for email verification.
+      if (identity.email_verified !== true || typeof identity.email !== 'string' || !identity.email) {
+        return send(403, {error: 'EMAIL_VERIFICATION_REQUIRED'});
+      }
       try {
         const account = await accountStore.getOrCreate(identity.uid, newAccountRecord(identity.uid, now()));
         if (account.suspended) return send(403, {error: 'ACCOUNT_SUSPENDED'});

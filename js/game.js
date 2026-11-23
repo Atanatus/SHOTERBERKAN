@@ -1,5 +1,7 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+// Preview-only: user-controlled URL flags NEVER authorize ranked runs or XP.
+const COMPETITIVE_PREVIEW = FrutiDryViewport.previewRequested(window.location.search);
 let width = 400, height = 700, cx = 200, cy = 300, trackHalfSpan = 220, trackHeight = 90, slotRadius = 24, coreTargetRadius = 42;
 let swapBoxRect = { x: 0, y: 0, w: 84, h: 60 };
 
@@ -271,8 +273,19 @@ function seedHazardsAndSuperball() {
 function resize() {
   resetImpactFX();
   const dpr = Math.min(window.devicePixelRatio || 1, renderQuality === 'eco' ? 1.25 : 2);
-  width = Math.max(1, canvas.clientWidth || window.innerWidth);
-  height = Math.max(1, canvas.clientHeight || (window.innerHeight - 60));
+  if (COMPETITIVE_PREVIEW) {
+    const host = canvas.parentElement;
+    const view = FrutiDryViewport.fit(Math.max(1,host.clientWidth),Math.max(1,host.clientHeight));
+    canvas.style.width = view.cssWidth + 'px';
+    canvas.style.height = view.cssHeight + 'px';
+    canvas.classList.add('competitive-preview-canvas');
+    document.getElementById('competitivePreviewNotice').hidden = false;
+    width = view.logicalWidth;
+    height = view.logicalHeight;
+  } else {
+    width = Math.max(1, canvas.clientWidth || window.innerWidth);
+    height = Math.max(1, canvas.clientHeight || (window.innerHeight - 60));
+  }
   canvas.width = Math.round(width * dpr);
   canvas.height = Math.round(height * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -383,6 +396,8 @@ function checkMilestoneProgress() {
 }
 
 function resetGame(testSeed = null) {
+  // This URL-driven QA preview is ALWAYS a non-rewarding laboratory run.
+  if (COMPETITIVE_PREVIEW && !(Number.isSafeInteger(testSeed) && testSeed>=1 && testSeed<=2147483647)) testSeed=480390844;
   state.practiceSeed = Number.isSafeInteger(testSeed) && testSeed >= 1 && testSeed <= 2147483647 ? testSeed : null;
   state.startedAt = new Date().toISOString();
   const practiceIndicator = document.getElementById('practiceIndicator');
@@ -530,15 +545,18 @@ function isPointInSwapBox(px, py) {
   return px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h;
 }
 
+function mapPointerToGame(e){
+  return FrutiDryViewport.pointerToLogical(e.clientX,e.clientY,canvas.getBoundingClientRect(),width,height);
+}
 function clearInput(){state.isAiming=false;keyState.left=keyState.right=false; if(pointerId!==null){if(canvas.hasPointerCapture(pointerId))canvas.releasePointerCapture(pointerId);pointerId=null;}}
 canvas.addEventListener('pointerdown',e=>{
   if(state.replayActive||paused||state.gameOver||state.projectile||state.chain||pointerId!==null||e.button!==0)return;
-  e.preventDefault();const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  e.preventDefault();const {x,y}=mapPointerToGame(e);
   if(isPointInSwapBox(x,y)){swapActiveAndUpcoming();return;}
   pointerId=e.pointerId;canvas.setPointerCapture(pointerId);updateAimFromPointer(x,y);state.isAiming=true;
 });
-canvas.addEventListener('pointermove',e=>{if(state.replayActive||e.pointerId!==pointerId||!state.isAiming)return;const r=canvas.getBoundingClientRect();updateAimFromPointer(e.clientX-r.left,e.clientY-r.top);});
-canvas.addEventListener('pointerup',e=>{if(state.replayActive||e.pointerId!==pointerId)return;e.preventDefault();const r=canvas.getBoundingClientRect();updateAimFromPointer(e.clientX-r.left,e.clientY-r.top);clearInput();shoot();});
+canvas.addEventListener('pointermove',e=>{if(state.replayActive||e.pointerId!==pointerId||!state.isAiming)return;const {x,y}=mapPointerToGame(e);updateAimFromPointer(x,y);});
+canvas.addEventListener('pointerup',e=>{if(state.replayActive||e.pointerId!==pointerId)return;e.preventDefault();const {x,y}=mapPointerToGame(e);updateAimFromPointer(x,y);clearInput();shoot();});
 canvas.addEventListener('pointercancel',clearInput);canvas.addEventListener('lostpointercapture',e=>{if(e.pointerId===pointerId)clearInput();});
 window.addEventListener('blur',clearInput);document.addEventListener('visibilitychange',clearInput);
 window.addEventListener('keydown',e=>{

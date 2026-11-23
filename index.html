@@ -13,6 +13,7 @@
 <link rel="preload" as="image" href="assets/background/santuario-panoramico.webp" media="(min-aspect-ratio: 1/1)">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/account.css">
+<link rel="stylesheet" href="css/competitive-viewport.css">
 <script>
 // Minimal HTML-level guard: also works if a critical defer script never loads.
 window.addEventListener('DOMContentLoaded', () => {
@@ -95,6 +96,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   <div id="comboHud"><div class="combo-title">RESONANCIA</div><div class="combo-number" id="v2ComboNumber">×1</div><div class="combo-tier" id="v2ComboTier">LISTO</div><div class="combo-bar"><div class="combo-fill" id="v2ComboFill"></div></div></div><div id="toast" role="status">★ ¡HITO ALCANZADO!</div>
   <div id="practiceIndicator" hidden>LABORATORIO · SIN RÉCORD</div>
+  <div id="competitivePreviewNotice" hidden>PRUEBA VISUAL 390 × 844 · SIN XP NI TORNEO</div>
   <div id="debugHud" hidden aria-live="off"></div>
   <canvas id="gameCanvas" aria-label="Tablero de FrutiDry. Arrastra para apuntar y suelta para disparar."></canvas>
 
@@ -174,6 +176,15 @@ window.addEventListener('DOMContentLoaded', () => {
       </form>
       <p>El correo y la contraseña se entregan directamente a Firebase. La API de FrutiDry solo recibe el token de identidad.</p>
     </section>
+    <section class="account-email-verification account-panel" id="accountEmailVerification" hidden aria-labelledby="accountVerificationHeading">
+      <h2 id="accountVerificationHeading">CONFIRMAR CORREO ELECTRÓNICO</h2>
+      <p>Tu sesión es válida, pero el correo todavía no consta como verificado en Firebase. Las partidas competitivas seguirán bloqueadas hasta confirmarlo.</p>
+      <div class="account-actions">
+        <button class="tab-btn" type="button" id="accountSendVerification">ENVIAR VERIFICACIÓN</button>
+        <button class="tab-btn" type="button" id="accountCheckVerification">YA LO HE VERIFICADO</button>
+      </div>
+      <p id="accountVerificationHint" aria-live="polite">Comprueba tu bandeja de entrada y la carpeta de spam.</p>
+    </section>
     <section class="account-profile" id="accountProfile" hidden>
       <h2>MI PROGRESIÓN PERMANENTE</h2>
       <p>Sesión: <strong id="accountPlayerEmail">—</strong></p>
@@ -249,6 +260,7 @@ window.addEventListener('DOMContentLoaded', () => {
 <script defer src="js/assets.js"></script>
 <script defer src="js/audio.js"></script>
 <script defer src="js/simulation-core.js"></script>
+<script defer src="js/competitive-viewport.js"></script>
 <script defer src="js/data.js"></script>
 <script defer src="js/fault.js"></script>
 <script defer src="js/game.js"></script>
@@ -259,6 +271,7 @@ window.addEventListener('DOMContentLoaded', () => {
 <script defer src="js/tournament.js"></script>
 <script defer src="js/account-config.js"></script>
 <script defer src="js/account-client.js"></script>
+<script defer src="js/account-verification.js"></script>
 <script defer src="js/account-ui.js"></script>
 </body>
 </html>

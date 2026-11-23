@@ -35,12 +35,18 @@ jobs:
         run: node --test tests/simulation-stage3.test.mjs
       - name: Headless browser-to-Node full-run replay verification (no XP)
         run: node --test tests/headless-replay.test.mjs
+      - name: Headless VM loads competitive viewport with no preview mode
+        run: node --test tests/headless-viewport-compat.test.mjs
       - name: Isolated replay subprocess, bounded queue and fail-closed outcomes
         run: node --test tests/isolated-verifier.test.mjs
       - name: Atomic verification leases, stored session ownership and zero XP
         run: node --test tests/run-verification.test.mjs
+      - name: Fixed logical 390x844 viewport and pointer mapping contracts (preview only)
+        run: node --test tests/competitive-viewport.test.mjs
       - name: Web account contract and API transport tests
         run: node --test tests/account-client.test.mjs
+      - name: Email verification flow and token-claim protection (Firebase beta)
+        run: node --test tests/account-email-verification.test.mjs
 
   browser:
     runs-on: ubuntu-24.04
@@ -60,3 +66,7 @@ jobs:
         run: python tests/browser_qa.py
       - name: Account UI, pause and SDK-off responsive tests
         run: python tests/account-browser-qa.py
+      - name: Verification UI in Chromium without Firebase network
+        run: python tests/account-verification-browser-qa.py
+      - name: Real-browser QA for logical viewport preview and normal play
+        run: python tests/viewport-browser-qa.py

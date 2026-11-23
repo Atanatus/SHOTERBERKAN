@@ -29,7 +29,7 @@ async function throwsCode(fn, code) {
 async function serverWith(runIntake) {
   const api=createAccountApi({verifyToken: async token=>{
       if(token==='invalid')throw Error('revoked');
-      return {uid:token==='other'?other:UID};
+      return {uid:token==='other'?other:UID, email:'verified@example.test', email_verified:true};
     },accountStore:{getOrCreate:async uid=>({_id:uid,xp:0,suspended:false})},
     allowedOrigins:[ORIGIN],now:clock,runIntake});
   await new Promise(resolve=>api.listen(0,'127.0.0.1',resolve));

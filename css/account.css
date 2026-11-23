@@ -29,3 +29,9 @@
   header #btnAccount .account-nav-text{display:none}
 }
 @media(max-width:355px){header #btnAccount{min-width:29px;width:30px;max-width:30px;font-size:14px}}
+
+/* V49: verification notice is independent of the profile and safe at 320px. */
+.account-email-verification{border-color:rgba(255,200,99,.55);background:linear-gradient(145deg,rgba(45,28,22,.92),rgba(31,23,56,.92))}
+.account-email-verification h2{font-size:clamp(15px,2.3vw,19px)}
+.account-email-verification .account-actions button{flex:1 1 210px}
+#accountVerificationHint{margin:10px 0 0;overflow-wrap:anywhere}
