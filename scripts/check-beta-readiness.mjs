@@ -15,7 +15,8 @@ export function inspectBetaReadiness() {
   const html=source('index.html');
   const pkg=JSON.parse(source('server/package.json'));
   const scripts=['account-config.js','account-client.js','account-verification.js','account-session.js','account-ui.js'];
-  const positions=scripts.map(name=>html.indexOf(`src="js/${name}"`));
+  const scriptSources=Array.from(html.matchAll(/<script\b[^>]*\bsrc="js\/([^"?]+)(?:\?[^\"]*)?"/g),match=>match[1]);
+  const positions=scripts.map(name=>scriptSources.indexOf(name));
   const requiredServerVars=['MONGODB_URI','FIREBASE_PROJECT_ID','FRUTIDRY_DB_NAME','FRUTIDRY_ALLOWED_ORIGINS'];
   const checks={
     nodeSupported:Number(process.versions.node.split('.')[0])>=22,
