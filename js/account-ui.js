@@ -5,6 +5,7 @@
    External SDK loads ONLY when explicit public configuration enables accounts. */
 const {validateAccountConfig,fetchPrivateAccount,friendlyAccountError}=FrutiDryAccountClient;
 const {createFlow,verified}=FrutiDryEmailVerification;
+const {createSession}=FrutiDryAccountSession;
 
 const ids = ['btnAccount','accountModal','accountClose','accountStatus','accountUnavailable',
   'accountAuthPanel','accountForm','accountEmail','accountPassword','accountSubmit',
@@ -12,8 +13,8 @@ const ids = ['btnAccount','accountModal','accountClose','accountStatus','account
   'accountLevel','accountXp','accountAccess','accountRefresh','accountLogout',
   'accountEmailVerification','accountSendVerification','accountCheckVerification','accountVerificationHint'];
 const el = Object.fromEntries(ids.map(id => [id,document.getElementById(id)]));
-let config = {enabled:false}, sdk=null, auth=null, authUser=null, emailFlow=null;
-let opened=false, busy=false, signupMode=false, requestId=0, requestController=null;
+let config = {enabled:false}, sdk=null, auth=null, authUser=null, emailFlow=null, profileSession=null;
+let opened=false, busy=false, signupMode=false;
 function text(id,value){el[id].textContent=String(value);}
 function setMessage(message,kind='info') {
   el.accountStatus.textContent=message;
@@ -36,11 +37,7 @@ function displayEmailVerification(user) {
     ? 'Mensaje enviado. Podrás solicitar otro dentro de '+Math.ceil(ms/1000)+' segundos. Comprueba también spam.'
     : 'Envía el mensaje y abre el enlace desde tu correo. Después pulsa «YA LO HE VERIFICADO».');
 }
-function cancelProfileRequest(){
-  requestId++;
-  requestController?.abort();
-  requestController=null;
-}
+function cancelProfileRequest(){ profileSession?.cancel(); }
 function setPublicIdentity(user) {
   el.accountAuthPanel.hidden=!!user;
   el.accountProfile.hidden=true;
@@ -61,29 +58,20 @@ function showAccount(account){
     'Identidad y correo verificados. Los torneos con dinero siguen desactivados.','ok');
 }
 async function refreshProfile(){
-  if(!authUser||!config.enabled||!auth)return;
-  cancelProfileRequest();
-  const ticket=requestId, uid=authUser.uid;
-  const controller=new AbortController();requestController=controller;
-  const timer=setTimeout(()=>controller.abort(),9000);
+  if(!authUser||!config.enabled||!auth||!profileSession)return;
+  const owner=authUser;
   setMessage('Consultando nivel permanente en el servidor…');
   el.accountProfile.hidden=true;
-  try {
-    const token=await authUser.getIdToken();
-    if(ticket!==requestId||authUser?.uid!==uid)return;
-    const account=await fetchPrivateAccount({apiBaseUrl:config.apiBaseUrl,token,signal:controller.signal});
-    if(ticket!==requestId||authUser?.uid!==uid)return;
-    if(account.uid!==uid) throw new TypeError('Identidad de cuenta no coincidente');
-    showAccount(account);
-  } catch(error) {
-    if(ticket===requestId && authUser?.uid===uid) setMessage(friendlyAccountError(error),'error');
-  } finally {
-    clearTimeout(timer);
-    if(ticket===requestId)requestController=null;
-  }
+  const result=await profileSession.load(config.apiBaseUrl);
+  if(result.status==='STALE' || authUser !== owner)return;
+  if(result.status==='PROFILE')showAccount(result.account);
+  else if(result.status==='SESSION_INVALID'){
+    el.accountProfile.hidden=true;
+    setMessage('La sesión fue rechazada por el servidor. Accede de nuevo.','error');
+  }else if(result.status==='ERROR')setMessage(friendlyAccountError(result.error),'error');
 }
 function onFirebaseUser(user){
-  cancelProfileRequest();
+  profileSession?.setUser(user);
   authUser=user;
   setPublicIdentity(user);
   if(user){
@@ -106,6 +94,15 @@ async function ensureFirebase(){
     const instance=authApi.getAuth(app);
     await authApi.setPersistence(instance,authApi.browserSessionPersistence);
     sdk=authApi;auth=instance;
+    profileSession=createSession({
+      readProfile:fetchPrivateAccount,
+      signOut:async previous=>{
+        // The callback cannot sign out a different player after a UID switch.
+        if(authUser?.uid!==previous.uid)return;
+        if(auth.currentUser && auth.currentUser.uid!==previous.uid)return;
+        await authApi.signOut(auth);
+      }
+    });
     auth.languageCode='es';
     emailFlow=createFlow({sendEmailVerification:authApi.sendEmailVerification,reload:authApi.reload});
     authApi.onAuthStateChanged(instance,onFirebaseUser,error=>setMessage(friendlyAccountError(error),'error'));

@@ -81,6 +81,7 @@ def main():
                 page.add_script_tag(content=MOCK)
                 page.add_script_tag(content=(ROOT/'js/account-client.js').read_text('utf-8'))
                 page.add_script_tag(content=(ROOT/'js/account-verification.js').read_text('utf-8'))
+                page.add_script_tag(content=(ROOT/'js/account-session.js').read_text('utf-8'))
                 page.add_script_tag(content=ui)
                 page.locator('#btnAccount').click()
                 page.wait_for_function('document.getElementById("accountEmailVerification").hidden===false')

@@ -47,6 +47,10 @@ jobs:
         run: node --test tests/account-client.test.mjs
       - name: Email verification flow and token-claim protection (Firebase beta)
         run: node --test tests/account-email-verification.test.mjs
+      - name: V50 account token recovery and race-safe sessions
+        run: node --test tests/account-session.test.mjs
+      - name: V50 offline beta readiness and fail-closed deployment contracts
+        run: node --test tests/beta-readiness.test.mjs
 
   browser:
     runs-on: ubuntu-24.04
@@ -70,3 +74,5 @@ jobs:
         run: python tests/account-verification-browser-qa.py
       - name: Real-browser QA for logical viewport preview and normal play
         run: python tests/viewport-browser-qa.py
+      - name: V50 session token renewal and logout behavior in Chromium
+        run: python tests/account-session-browser-qa.py
