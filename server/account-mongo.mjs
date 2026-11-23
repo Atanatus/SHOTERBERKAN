@@ -1,5 +1,5 @@
 // Only server-side. Importing this module does NOT initialize a MongoDB connection.
-export function mongoAccountStore(collection) {
+export function mongoAccountStore(collection, {verifiedRuns} = {}) {
   if (!collection || typeof collection.findOneAndUpdate !== 'function') throw new TypeError('MongoDB collection required');
   return Object.freeze({
     async getOrCreate(uid, defaults) {
@@ -12,7 +12,18 @@ export function mongoAccountStore(collection) {
         {upsert: true, returnDocument: 'after'}
       );
       if (!record) throw new Error('Cuenta no recuperada');
-      return record;
+      if (!verifiedRuns) return record;
+      // Receipts are unique by run ID. Rebuilding the projection cannot double-count a retry.
+      const [progress] = await verifiedRuns.aggregate([
+        {$match:{uid,status:'REPLAY_CONSISTENT_NOT_ANTICHEAT',arcadeProgress:{$exists:true}}},
+        {$group:{_id:null,bestScore:{$max:'$arcadeProgress.bestScore'},
+          coresDetonated:{$sum:'$arcadeProgress.coresDetonated'},
+          relicSets:{$addToSet:'$arcadeProgress.unlockedRelics'}}},
+        {$project:{_id:0,bestScore:1,coresDetonated:1,unlockedRelics:{
+          $reduce:{input:'$relicSets',initialValue:[],in:{$setUnion:['$$value','$$this']}}
+        }}}
+      ]).toArray();
+      return progress ? {...record,arcadeProgress:progress} : record;
     }
   });
 }

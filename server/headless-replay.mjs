@@ -16,7 +16,7 @@ const BOOT = new Script('resize(); resetGame(__seed);', {filename: 'headless-boo
 const STEP = new Script('update(); ReplayLab.afterStep();', {filename: 'headless-step.js'});
 const START_REPLAY = new Script('ReplayLab.begin(__diagnostic);', {filename: 'headless-begin.js'});
 const ACTIVE = new Script('state.replayActive', {filename:'headless-active.js'});
-const INSPECT = new Script('({ snapshot: ReplayLab.snapshot(), status: document.getElementById("replayStatus").textContent, active:state.replayActive, actions:state.actionLog.length, steps:state.simFrame })', {filename:'headless-inspect.js'});
+const INSPECT = new Script('({ snapshot: ReplayLab.snapshot(), runCores:state.runCores, runRelics:state.runRelics, status: document.getElementById("replayStatus").textContent, active:state.replayActive, actions:state.actionLog.length, steps:state.simFrame })', {filename:'headless-inspect.js'});
 const CAPTURE = new Script('ContinuityLab.captureRun();', {filename: 'headless-capture.js'});
 
 export const HEADLESS_VERIFIER_VERSION = 1;
@@ -106,6 +106,7 @@ export function verifyHeadlessDiagnostic(diagnostic, session) {
           return {status:'REJECTED',reason:'REPLAY_DIVERGENCE',at:i+1,xpGranted:0,ranked:false};
         }
         return {status:'REPLAY_CONSISTENT_NOT_ANTICHEAT',steps:i+1,scoreRecomputed:state.snapshot.score,
+          coresRecomputed:state.runCores,relicsRecomputed:[...state.runRelics],
           scoreClaimed,xpGranted:0,ranked:false,eligibleForPrizes:false};
       }
     }

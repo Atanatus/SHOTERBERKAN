@@ -62,6 +62,12 @@ export function createRunVerificationService({store,verifier,now=()=>new Date(),
       const fields={status:target,verificationReason:reason,
         verificationAt:now(),verificationScoreRecomputed:computed,
         xpGranted:0,ranked:false,eligibleForPrizes:false};
+      if (target==='REPLAY_CONSISTENT_NOT_ANTICHEAT' && Number.isSafeInteger(outcome.coresRecomputed) &&
+          outcome.coresRecomputed>=0 && Array.isArray(outcome.relicsRecomputed) &&
+          outcome.relicsRecomputed.length<=12 && outcome.relicsRecomputed.every(id=>Number.isInteger(id) && id>=1 && id<=12)) {
+        fields.arcadeProgress={bestScore:computed,coresDetonated:outcome.coresRecomputed,
+          unlockedRelics:[...new Set(outcome.relicsRecomputed)]};
+      }
       const saved=await store.completeVerification(id,leaseId,fields);
       if (!saved) return publicResult(id,'NOT_CLAIMED','VERIFICATION_LEASE_LOST');
       return publicResult(id,target,reason,computed);

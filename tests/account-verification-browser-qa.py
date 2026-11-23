@@ -36,6 +36,7 @@ button,input{font:inherit;min-height:36px}
 <strong id='accountPlayerEmail'></strong>
 <strong id='accountLevel'></strong><strong id='accountXp'></strong><strong id='accountAccess'></strong>
 </section>
+<p id='accountArcadeProgress' hidden></p><button id='accountStartRun' hidden>Partida oficial</button>
 <button id='accountRefresh' hidden>Actualizar perfil</button><button id='accountLogout' hidden>Salir</button>
 </section>
 </body></html>"""

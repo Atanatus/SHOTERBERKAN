@@ -5,6 +5,11 @@ import {MongoClient} from 'mongodb';
 import {createAccountApi} from './account-http.mjs';
 import {mongoAccountStore} from './account-mongo.mjs';
 
+import {createRunIntake} from './run-intake.mjs';
+import {mongoRunStore} from './run-mongo.mjs';
+import {createRunVerificationService} from './run-verification.mjs';
+import {createIsolatedVerifier} from './isolated-verifier.mjs';
+
 function requiredEnv(key) {
   const value = process.env[key]?.trim();
   if (!value) throw new Error(`Falta configuración: ${key}`);
@@ -30,16 +35,35 @@ await client.connect();
 try {
   await client.db(dbName).command({ping: 1});
 } catch (e) { await client.close(); throw e; }
+const db = client.db(dbName);
+const verifiedRuns = db.collection('arcade_runs');
+let runIntake = null;
+let verifier = null;
+if (process.env.FRUTIDRY_ACCOUNT_ARCADE === 'true') {
+  try {
+    await verifiedRuns.createIndex({uid:1,status:1});
+    const store = mongoRunStore(verifiedRuns);
+    verifier = createIsolatedVerifier();
+    const verification = createRunVerificationService({store,verifier});
+    runIntake = createRunIntake({store,verifyRun:verification.verifyOne});
+  } catch (error) {
+    verifier?.close();
+    await client.close();
+    throw error;
+  }
+}
 const api = createAccountApi({
   verifyToken: token => getAuth().verifyIdToken(token, true), // Includes revocation/disabled-account checks.
-  accountStore: mongoAccountStore(client.db(dbName).collection('accounts')),
-  allowedOrigins: origins
+  accountStore: mongoAccountStore(db.collection('accounts'),runIntake ? {verifiedRuns} : undefined),
+  allowedOrigins: origins,
+  runIntake
 });
 api.listen(port, '0.0.0.0', () => console.log(`FrutiDry accounts API listening :${port}`));
 let closing = false;
 async function shutdown() {
   if (closing) return;
   closing = true;
+  verifier?.close();
   api.close(() => client.close().then(() => process.exit(0), () => process.exit(1)));
   // Render can SIGKILL the process if open connections do not drain.
   setTimeout(() => process.exit(1), 8000).unref();

@@ -111,7 +111,7 @@ export function createAccountApi({verifyToken, accountStore, allowedOrigins, now
     }
     try {
       const record = await accountStore.getOrCreate(identity.uid, newAccountRecord(identity.uid, now()));
-      return send(200, {account: publicAccount(record)});
+      return send(200, {account: {...publicAccount(record),officialArcadeEnabled: Boolean(runIntake)}});
     } catch (error) {
       console.error('Account API storage error', error instanceof Error ? error.name : 'Unknown');
       return send(503, {error: 'ACCOUNT_SERVICE_UNAVAILABLE'});

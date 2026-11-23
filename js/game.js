@@ -27,6 +27,8 @@ let state = {
   recordHolder: String(STORE.get('kosen_v20_holder',STORE.get('kosen_v3_holder','BERKAN'))).slice(0,14),
   coresDetonated: Math.max(0, Number(STORE.get('kosen_cores',0)) || 0),
   unlockedRelics: (()=>{const v=STORE.get('kosen_relics',[]);return Array.isArray(v)?[...new Set(v.filter(x=>Number.isInteger(x)&&x>=1&&x<=12))]:[]})(),
+  runCores: 0,
+  runRelics: [],
   actionLog: [],
   inputLog: [], traceIncomplete: false, traceTruncationReason: null, simFrame: 0, replayActive: false, replayData: null,
   practiceSeed: null,
@@ -273,16 +275,21 @@ function seedHazardsAndSuperball() {
 function resize() {
   resetImpactFX();
   const dpr = Math.min(window.devicePixelRatio || 1, renderQuality === 'eco' ? 1.25 : 2);
-  if (COMPETITIVE_PREVIEW) {
+  if (COMPETITIVE_PREVIEW || state.officialRun) {
     const host = canvas.parentElement;
     const view = FrutiDryViewport.fit(Math.max(1,host.clientWidth),Math.max(1,host.clientHeight));
     canvas.style.width = view.cssWidth + 'px';
     canvas.style.height = view.cssHeight + 'px';
     canvas.classList.add('competitive-preview-canvas');
-    document.getElementById('competitivePreviewNotice').hidden = false;
+    document.getElementById('competitivePreviewNotice').hidden = !COMPETITIVE_PREVIEW;
     width = view.logicalWidth;
     height = view.logicalHeight;
   } else {
+    if (canvas.classList.contains('competitive-preview-canvas')) {
+      canvas.style.width = '';
+      canvas.style.height = '';
+      canvas.classList.remove('competitive-preview-canvas');
+    }
     width = Math.max(1, canvas.clientWidth || window.innerWidth);
     height = Math.max(1, canvas.clientHeight || (window.innerHeight - 60));
   }
@@ -395,9 +402,12 @@ function checkMilestoneProgress() {
   }
 }
 
-function resetGame(testSeed = null) {
+function resetGame(testSeed = null, officialRun = null) {
+  const changedViewport = Boolean(state.officialRun) !== Boolean(officialRun);
+  state.officialRun = officialRun;
+  if (changedViewport) resize();
   // This URL-driven QA preview is ALWAYS a non-rewarding laboratory run.
-  if (COMPETITIVE_PREVIEW && !(Number.isSafeInteger(testSeed) && testSeed>=1 && testSeed<=2147483647)) testSeed=480390844;
+  if (COMPETITIVE_PREVIEW && !officialRun && !(Number.isSafeInteger(testSeed) && testSeed>=1 && testSeed<=2147483647)) testSeed=480390844;
   state.practiceSeed = Number.isSafeInteger(testSeed) && testSeed >= 1 && testSeed <= 2147483647 ? testSeed : null;
   state.startedAt = new Date().toISOString();
   const practiceIndicator = document.getElementById('practiceIndicator');
@@ -405,12 +415,14 @@ function resetGame(testSeed = null) {
   astralBursts.length=0; lanePulses.length=0; resetImpactFX();
   runSerial++; state.chain=null; state.superCooldown=0; state.shotCount=0; state.lastSuperShot=-1; state.bestCombo=0; state.isAiming=false; pointerId=null; keyState.left=keyState.right=false;
   clearTimeout(showToast._timer); document.getElementById("toast").classList.remove("show");
-  state.seed = state.practiceSeed ?? (Math.floor(Math.random() * 2147483647) || 1337);
+  state.seed = officialRun?.seed ?? state.practiceSeed ?? (Math.floor(Math.random() * 2147483647) || 1337);
   state.rng = createPRNG(state.seed);
   state.tick = 0;
   state.arrowAngle = 0;
   state.aimAngle = 0;
   state.score = 0;
+  state.runCores = 0;
+  state.runRelics = [];
   state.actionLog = []; state.inputLog = []; state.traceCheckpoints = []; state.traceIncomplete=false;state.traceTruncationReason=null;state.simFrame=0;state.replayActive=false;state.replayData=null;
   if (typeof ReplayLab !== 'undefined') ReplayLab.resetRecording();
   state.milestoneIndex = 0;
@@ -462,7 +474,8 @@ function showToast(msg) {
 
 function checkRelicUnlock(level) {
   const relic = RELIC_DATA.find(r => r.reqLvl === level);
-  if (state.practiceSeed !== null) return;
+  if (relic && !state.runRelics.includes(relic.id)) state.runRelics.push(relic.id);
+  if (state.practiceSeed !== null || state.officialRun) return;
   if (relic && !state.unlockedRelics.includes(relic.id)) {
     state.unlockedRelics.push(relic.id);
     STORE.set('kosen_relics', state.unlockedRelics);
@@ -660,8 +673,9 @@ function detonateLaneBomb(bombSlotIndex, impactX, impactY) {
 }
 
 function detonateCenterFigure(projLevel) {
+  state.runCores++;
   startCoreFX();
-  if (state.practiceSeed === null) {
+  if (state.practiceSeed === null && !state.officialRun) {
     state.coresDetonated++;
     STORE.set('kosen_cores', state.coresDetonated);
   }
@@ -872,7 +886,7 @@ async function triggerGameOver(reason) {
   state.gameOver = true;
   AudioEngine.onGameOver(); clearInput(); state.chain=null;
   const serial=runSerial;
-  if (state.practiceSeed === null && state.score > state.best) {
+  if (state.practiceSeed === null && !state.officialRun && state.score > state.best) {
     state.best = state.score;
     STORE.set('kosen_v20_best', state.best);
   }
