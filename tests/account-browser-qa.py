@@ -2,7 +2,7 @@
 """V41 Chromium smoke test with the real FrutiDry document and HTTP modules.
 
 Requires Playwright, which is installed in GitHub Actions browser job.
-No Firebase or Render services are required: the production gate defaults to OFF.
+No Firebase or Render services are required: this test supplies an SDK-off configuration.
 """
 from __future__ import annotations
 import functools
@@ -31,6 +31,10 @@ def main():
                     external = []
                     page.on('pageerror', lambda error: errors.append(str(error)))
                     page.on('request', lambda request: external.append(request.url) if 'gstatic.com/firebasejs/' in request.url else None)
+                    page.route('**/js/account-config.js*', lambda route: route.fulfill(
+                        content_type='application/javascript',
+                        body='window.FRUTIDRY_ACCOUNT_CONFIG = {enabled: false, allowRegistration: false};',
+                    ))
                     page.goto(origin+'/index.html', wait_until='load', timeout=30000)
                     page.wait_for_function('window.__FRUTIDRY_BOOT_READY__ === true', timeout=15000)
                     page.wait_for_function("document.getElementById('accountStatus').textContent.includes('Registro cerrado')", timeout=15000)
