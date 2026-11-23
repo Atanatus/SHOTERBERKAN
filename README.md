@@ -298,3 +298,11 @@ El diseño técnico, la separación servidor/cliente, los riesgos legales y la e
 - `scripts/verify-diagnostic.mjs` permite inspección local especificando la semilla esperada, nunca tomada como verdad de los metadatos del cliente.
 - **Seguridad:** un replay consistente puede automatizarse y no es prueba antifraude; `node:vm` no es frontera de aislamiento. El viewport del modo competitivo, el verificador aislado, la integración operativa, el ledger idempotente de XP y el cumplimiento legal siguen pendientes.
 - Procedimiento, comandos y barreras: `docs/HEADLESS_REPLAY_V46.md`.
+
+## V47 · Verificador de replay en proceso aislado (aún sin XP)
+
+- Nuevo `server/isolated-verifier.mjs` y proceso hijo desechable `server/isolated-verifier-worker.mjs`: cola y concurrencia acotadas, timeout, heap de 128 MiB y respuesta de error cerrada. No son un sandbox completo ni una API pública.
+- Nuevo `server/run-verification.mjs`: revisa una sesión con semilla y JSON persistidos, comprueba SHA-256, emplea bloqueo atómico con vencimiento (`server/run-mongo.mjs`) y concilia el replay sin aceptar nivel, ranking o recompensas del navegador.
+- Todos los resultados y reintentos conservan `xpGranted: 0`, `ranked: false` y `eligibleForPrizes: false`. Un replay consistente sigue sin demostrar que el jugador sea humano.
+- 13 pruebas de aislamiento, colas, timeout, fraude de respuesta, CAS, recuperación de leases y almacenamiento; GitHub Actions ejecutará esas pruebas además de las regresiones existentes.
+- Documentación de contrato, riesgos restantes y ejemplo de uso interno: [`docs/ISOLATED_VERIFICATION_V47.md`](docs/ISOLATED_VERIFICATION_V47.md).

@@ -35,6 +35,10 @@ jobs:
         run: node --test tests/simulation-stage3.test.mjs
       - name: Headless browser-to-Node full-run replay verification (no XP)
         run: node --test tests/headless-replay.test.mjs
+      - name: Isolated replay subprocess, bounded queue and fail-closed outcomes
+        run: node --test tests/isolated-verifier.test.mjs
+      - name: Atomic verification leases, stored session ownership and zero XP
+        run: node --test tests/run-verification.test.mjs
       - name: Web account contract and API transport tests
         run: node --test tests/account-client.test.mjs
 

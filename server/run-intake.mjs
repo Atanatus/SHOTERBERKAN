@@ -137,6 +137,25 @@ export function memoryRunStore() {
       if (!s || s.uid !== uid || s.status !== 'ISSUED' || at >= s.expiresAt) return false;
       Object.assign(s, {status:'PENDING_INDEPENDENT_VERIFICATION', submittedAt: at, ...structuredClone(fields)});
       return true;
+    },
+    async claimVerification(id, leaseId, at, leaseMs, maxAttempts = 3) {
+      const s=records.get(id);
+      if (!s || (s.verificationAttempts || 0) >= maxAttempts ||
+          !(s.status === 'PENDING_INDEPENDENT_VERIFICATION' ||
+            (s.status === 'VERIFYING' && s.verificationLeaseUntil <= at))) return null;
+      s.status='VERIFYING';
+      s.verificationLeaseId=leaseId;
+      s.verificationLeaseUntil=new Date(at.getTime()+leaseMs);
+      s.verificationAttempts=(s.verificationAttempts || 0)+1;
+      return structuredClone(s);
+    },
+    async completeVerification(id, leaseId, fields) {
+      const s=records.get(id);
+      if (!s || s.status!=='VERIFYING' || s.verificationLeaseId!==leaseId) return false;
+      Object.assign(s,structuredClone(fields));
+      delete s.verificationLeaseId;
+      delete s.verificationLeaseUntil;
+      return true;
     }
   };
 }
