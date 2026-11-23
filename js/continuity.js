@@ -135,6 +135,13 @@ const ContinuityLab = (() => {
   }
   function finishRun(reason) {
     lastCompletedRun = captureRun(reason);
+    if (state.officialRun) {
+      const run = state.officialRun;
+      queueMicrotask(()=>{
+        if (state.officialRun === run) run.submit(captureRun(reason));
+      });
+      return;
+    }
     try {
       const json = JSON.stringify(lastCompletedRun);
       if (json.length < 250_000) localStorage.setItem('kosen_v23_last_run', json);

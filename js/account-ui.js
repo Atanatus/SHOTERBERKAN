@@ -3,18 +3,19 @@
 'use strict';
 /* FrutiDry V41 · Optional Firebase client, no impact on gameplay or local saves.
    External SDK loads ONLY when explicit public configuration enables accounts. */
-const {validateAccountConfig,fetchPrivateAccount,friendlyAccountError}=FrutiDryAccountClient;
+const {validateAccountConfig,fetchPrivateAccount,postOfficialRun,friendlyAccountError}=FrutiDryAccountClient;
 const {createFlow,verified}=FrutiDryEmailVerification;
 const {createSession}=FrutiDryAccountSession;
 
 const ids = ['btnAccount','accountModal','accountClose','accountStatus','accountUnavailable',
   'accountAuthPanel','accountForm','accountEmail','accountPassword','accountSubmit',
   'accountModeButton','accountResetPassword','accountProfile','accountPlayerEmail',
-  'accountLevel','accountXp','accountAccess','accountRefresh','accountLogout',
+  'accountLevel','accountXp','accountAccess','accountStartRun','accountArcadeProgress','accountRefresh','accountLogout',
   'accountEmailVerification','accountSendVerification','accountCheckVerification','accountVerificationHint'];
 const el = Object.fromEntries(ids.map(id => [id,document.getElementById(id)]));
 let config = {enabled:false}, sdk=null, auth=null, authUser=null, emailFlow=null, profileSession=null;
 let opened=false, busy=false, signupMode=false;
+let officialRequest=null;
 function text(id,value){el[id].textContent=String(value);}
 function setMessage(message,kind='info') {
   el.accountStatus.textContent=message;
@@ -41,6 +42,7 @@ function cancelProfileRequest(){ profileSession?.cancel(); }
 function setPublicIdentity(user) {
   el.accountAuthPanel.hidden=!!user;
   el.accountProfile.hidden=true;
+  el.accountStartRun.hidden=true;
   el.accountRefresh.hidden=!user;
   el.accountLogout.hidden=!user;
   text('accountPlayerEmail',user?.email||'Correo no disponible');
@@ -52,6 +54,13 @@ function showAccount(account){
   text('accountXp',account.nextLevelXp===null ? account.xp.toLocaleString('es-ES')+' XP (máximo)' :
     account.xp.toLocaleString('es-ES')+' / '+account.nextLevelXp.toLocaleString('es-ES')+' XP');
   text('accountAccess', account.tournamentAccessEnabled ? 'Según servidor' : 'Cerrado');
+  const progress=account.arcadeProgress;
+  el.accountArcadeProgress.hidden=!account.officialArcadeEnabled || !progress;
+  el.accountStartRun.hidden=!account.officialArcadeEnabled || !verified(authUser);
+  if (progress) {
+    text('accountArcadeProgress','Récord oficial: '+progress.bestScore.toLocaleString('es-ES')+
+      ' · Núcleos: '+progress.coresDetonated+' · Reliquias: '+progress.unlockedRelics.length+'/12');
+  }
   el.accountProfile.hidden=false;
   setMessage(!verified(authUser) ? 'Perfil cargado. Correo pendiente de verificar: competición bloqueada.' :
     account.tournamentAccessEnabled ? 'Perfil consultado. El torneo necesita su convocatoria oficial.' :
@@ -71,6 +80,10 @@ async function refreshProfile(){
   }else if(result.status==='ERROR')setMessage(friendlyAccountError(result.error),'error');
 }
 function onFirebaseUser(user){
+  if (authUser?.uid !== user?.uid) {
+    officialRequest?.abort();
+    if (typeof state !== 'undefined' && state.officialRun) resetGame();
+  }
   profileSession?.setUser(user);
   authUser=user;
   setPublicIdentity(user);
@@ -159,6 +172,55 @@ document.querySelector('header nav').addEventListener('click',event=>{
 },true);
 document.addEventListener('keydown',event=>{
   if(event.key==='Escape'&&opened){event.preventDefault();closeAccount();if(typeof setTab==='function')setTab('play');}
+});
+el.accountStartRun.addEventListener('click',async()=>{
+  const owner=authUser;
+  if (!owner || !verified(owner) || officialRequest) return;
+  const controller=new AbortController();
+  officialRequest=controller;
+  el.accountStartRun.disabled=true;
+  const request=async (runId,diagnostic)=>postOfficialRun({
+    apiBaseUrl:config.apiBaseUrl,token:await owner.getIdToken(),runId,diagnostic,
+    signal:AbortSignal.any([controller.signal,AbortSignal.timeout(35_000)])
+  });
+  try {
+    const {run}=await request();
+    if (authUser!==owner || controller.signal.aborted) return;
+    if (!run || !/^[0-9a-f-]{36}$/.test(run.id) || !Number.isInteger(run.seed) || run.seed<1 ||
+        run.seed>2147483647 || run.viewport?.width!==390 || run.viewport?.height!==844 ||
+        run.rulesVersion!==20 || run.gameVersion!==24) throw new TypeError('Partida oficial incompatible');
+    resetGame(null,{seed:run.seed,async submit(diagnostic){
+      if (authUser!==owner || controller.signal.aborted) return;
+      officialRequest=controller;
+      try {
+        const pending=new Set(['VERIFYING','PENDING_INDEPENDENT_VERIFICATION']);
+        let receipt;
+        for (let attempt=0;attempt<3;attempt++) {
+          ({receipt}=await request(run.id,diagnostic));
+          if (!pending.has(receipt?.status)) break;
+          await new Promise(resolve=>setTimeout(resolve,1000));
+        }
+        if (authUser!==owner || controller.signal.aborted) return;
+        if (receipt?.status==='REPLAY_CONSISTENT_NOT_ANTICHEAT') {
+          showToast('Partida guardada en tu cuenta.');
+          await refreshProfile();
+        } else {
+          showToast('Partida sin confirmar. Estado: '+(receipt?.status ?? 'desconocido'));
+        }
+      } catch {
+        if (authUser===owner && !controller.signal.aborted) showToast('No se pudo confirmar el guardado de la partida.');
+      } finally {
+        if (officialRequest===controller) officialRequest=null;
+      }
+    }});
+    closeAccount();
+    setTab('play');
+  } catch (error) {
+    if (authUser===owner) setMessage(friendlyAccountError(error),'error');
+  } finally {
+    if (officialRequest===controller) officialRequest=null;
+    el.accountStartRun.disabled=false;
+  }
 });
 el.accountModeButton.addEventListener('click',requestMode);
 el.accountForm.addEventListener('submit',async event=>{
