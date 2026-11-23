@@ -41,6 +41,22 @@ test('stored diagnostic is checked with stored seed, persisted with zero XP',asy
   }finally{verifier.close();}
 });
 
+test('the same submission can recover its verified receipt without counting twice',async()=>{
+  const store=memoryRunStore();
+  const verifier=createIsolatedVerifier();
+  try{
+    const verification=createRunVerificationService({store,verifier,now,makeLeaseId});
+    const intake=createRunIntake({store,now,makeId:()=>id,makeSeed:()=>1234,verifyRun:verification.verifyOne});
+    const uid='firebase_uid_1';
+    await intake.start(uid);
+    const first=await intake.submit(uid,id,structuredClone(fixture));
+    assert.equal(first.status,'REPLAY_CONSISTENT_NOT_ANTICHEAT');
+    assert.deepEqual(await intake.submit(uid,id,structuredClone(fixture)),first);
+    assert.equal(store.records.get(id).verificationAttempts,1);
+    await assert.rejects(intake.submit('other_user',id,structuredClone(fixture)),{code:'RUN_NOT_FOUND'});
+  }finally{verifier.close();}
+});
+
 test('a forged or damaged persisted JSON digest cannot reach the verifier',async()=>{
   const store=await issuedRun();
   store.records.get(id).diagnosticJson=JSON.stringify({...fixture,stats:{...fixture.stats,score:999}});

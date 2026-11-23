@@ -73,7 +73,7 @@ export function inspectDiagnostic(raw, session) {
   return {steps, scoreClaimed: raw.stats.score}; // Never grant XP from this value.
 }
 
-export function createRunIntake({store, now = () => new Date(), makeId = randomUUID,
+export function createRunIntake({store, verifyRun = null, now = () => new Date(), makeId = randomUUID,
     makeSeed = () => randomInt(1, 2147483648)} = {}) {
   if (!store || typeof store.insert !== 'function' || typeof store.find !== 'function' ||
       typeof store.claim !== 'function') throw new TypeError('Run store must implement insert/find/claim');
@@ -106,9 +106,9 @@ export function createRunIntake({store, now = () => new Date(), makeId = randomU
       const session = await store.find(id);
       // Do not reveal whether another player's session exists.
       if (!session || session.uid !== uid) fail('RUN_NOT_FOUND', 404);
-      if (session.status !== 'ISSUED') fail('RUN_ALREADY_SUBMITTED', 409);
       const at = now();
-      if (!(at instanceof Date) || at >= new Date(session.expiresAt)) fail('RUN_EXPIRED', 410);
+      if (session.status !== 'ISSUED' && !verifyRun) fail('RUN_ALREADY_SUBMITTED', 409);
+      if (session.status === 'ISSUED' && (!(at instanceof Date) || at >= new Date(session.expiresAt))) fail('RUN_EXPIRED', 410);
       let encoded;
       try { encoded = JSON.stringify(diagnostic); }
       catch { fail('INVALID_DIAGNOSTIC'); }
@@ -117,8 +117,19 @@ export function createRunIntake({store, now = () => new Date(), makeId = randomU
       }
       const {steps, scoreClaimed} = inspectDiagnostic(diagnostic, session);
       const reportHash = createHash('sha256').update(encoded, 'utf8').digest('hex');
-      const claimed = await store.claim(id, uid, at, {diagnosticJson: encoded, reportHash, steps, scoreClaimed});
-      if (!claimed) fail('RUN_ALREADY_SUBMITTED_OR_EXPIRED', 409);
+      if (session.status !== 'ISSUED' && session.reportHash !== reportHash) fail('RUN_ALREADY_SUBMITTED', 409);
+      if (session.status === 'ISSUED') {
+        const claimed = await store.claim(id, uid, at, {diagnosticJson: encoded, reportHash, steps, scoreClaimed});
+        if (!claimed) {
+          const existing = verifyRun ? await store.find(id) : null;
+          if (existing?.uid !== uid || existing.reportHash !== reportHash) fail('RUN_ALREADY_SUBMITTED_OR_EXPIRED', 409);
+        }
+      }
+      if (verifyRun) {
+        await verifyRun(id);
+        const verified = await store.find(id);
+        return Object.freeze({id,status:verified.status,reportHash,xpGranted:0,ranked:false,eligibleForPrizes:false});
+      }
       return Object.freeze({id, status: 'PENDING_INDEPENDENT_VERIFICATION', reportHash,
         xpGranted: 0, ranked: false, eligibleForPrizes: false});
     }
