@@ -60,9 +60,14 @@ export function createIsolatedVerifier({maxConcurrent=1,maxQueue=2,timeoutMs=20_
         if (r.status==='REPLAY_CONSISTENT_NOT_ANTICHEAT' &&
             Number.isSafeInteger(r.steps) && r.steps>=1 && r.steps<=MAX_HEADLESS_STEPS &&
             Number.isSafeInteger(r.scoreRecomputed) && r.scoreRecomputed>=0 &&
+            Number.isSafeInteger(r.coresRecomputed) && r.coresRecomputed>=0 &&
+            Array.isArray(r.relicsRecomputed) && r.relicsRecomputed.length<=12 &&
+            r.relicsRecomputed.every(id=>Number.isInteger(id) && id>=1 && id<=12) &&
+            new Set(r.relicsRecomputed).size===r.relicsRecomputed.length &&
             r.xpGranted===0 && r.ranked===false && r.eligibleForPrizes===false) {
           finishTracked(Object.freeze({...OUTCOME(r.status,'NONE'),
-            steps:r.steps,scoreRecomputed:r.scoreRecomputed}));
+            steps:r.steps,scoreRecomputed:r.scoreRecomputed,coresRecomputed:r.coresRecomputed,
+            relicsRecomputed:Object.freeze([...r.relicsRecomputed])}));
         } else if (r.status==='REJECTED' && r.xpGranted===0 &&
             r.ranked===false && r.eligibleForPrizes===false) {
           finishTracked(OUTCOME('REJECTED',reason));

@@ -6,6 +6,12 @@ export const MAX_LEVEL = 100;
 export const XP_STEP = 250;
 export const TOURNAMENT_MIN_ACCOUNT_LEVEL = 11;
 
+const INITIAL_ARCADE_PROGRESS = Object.freeze({
+  bestScore: 0,
+  coresDetonated: 0,
+  unlockedRelics: Object.freeze([])
+});
+
 export function requiredXpForLevel(level) {
   if (!Number.isInteger(level) || level < START_LEVEL || level > MAX_LEVEL) {
     throw new RangeError('Nivel fuera de rango');
@@ -32,6 +38,7 @@ export function newAccountRecord(uid, now = new Date()) {
   return {
     _id: uid,
     xp: 0,
+    arcadeProgress: INITIAL_ARCADE_PROGRESS,
     progressionVersion: ACCOUNT_PROGRESSION_VERSION,
     ageVerified: false,
     countryCode: null,
@@ -46,10 +53,12 @@ export function newAccountRecord(uid, now = new Date()) {
 export function publicAccount(record) {
   if (!record || typeof record !== 'object') throw new TypeError('Cuenta inválida');
   const level = levelForXp(record.xp);
+  const {bestScore, coresDetonated, unlockedRelics} = record.arcadeProgress ?? INITIAL_ARCADE_PROGRESS;
   return Object.freeze({
     uid: record._id,
     accountLevel: level,
     xp: record.xp,
+    arcadeProgress: Object.freeze({bestScore, coresDetonated, unlockedRelics: Object.freeze([...unlockedRelics])}),
     nextLevelXp: level < MAX_LEVEL ? requiredXpForLevel(level + 1) : null,
     progressionVersion: ACCOUNT_PROGRESSION_VERSION,
     minimumTournamentLevel: TOURNAMENT_MIN_ACCOUNT_LEVEL,

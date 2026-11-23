@@ -20,7 +20,8 @@ process.once('message', packet => {
       const raw = verifyHeadlessDiagnostic(packet.diagnostic, {seed:packet.session.seed});
       if (raw.status === 'REPLAY_CONSISTENT_NOT_ANTICHEAT') {
         result = {...outcome(raw.status, 'NONE'),
-          steps:raw.steps, scoreRecomputed:raw.scoreRecomputed};
+          steps:raw.steps, scoreRecomputed:raw.scoreRecomputed,
+          coresRecomputed:raw.coresRecomputed,relicsRecomputed:raw.relicsRecomputed};
       } else {
         result = outcome('REJECTED', SAFE_REASONS.test(raw.reason || '') ? raw.reason : 'REPLAY_ERROR');
         if (Number.isSafeInteger(raw.at)) result.at = raw.at;

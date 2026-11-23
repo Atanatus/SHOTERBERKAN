@@ -33,6 +33,7 @@ test('stored diagnostic is checked with stored seed, persisted with zero XP',asy
     assert.equal(persisted.status,'REPLAY_CONSISTENT_NOT_ANTICHEAT');
     assert.equal(persisted.verificationAttempts,1);
     assert.equal(persisted.verificationScoreRecomputed,90);
+    assert.deepEqual(persisted.arcadeProgress,{bestScore:90,coresDetonated:0,unlockedRelics:[]});
     assert.equal(persisted.xpGranted,0);
     assert.equal(persisted.ranked,false);
     assert.equal(persisted.eligibleForPrizes,false);

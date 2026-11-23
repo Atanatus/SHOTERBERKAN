@@ -27,6 +27,8 @@ let state = {
   recordHolder: String(STORE.get('kosen_v20_holder',STORE.get('kosen_v3_holder','BERKAN'))).slice(0,14),
   coresDetonated: Math.max(0, Number(STORE.get('kosen_cores',0)) || 0),
   unlockedRelics: (()=>{const v=STORE.get('kosen_relics',[]);return Array.isArray(v)?[...new Set(v.filter(x=>Number.isInteger(x)&&x>=1&&x<=12))]:[]})(),
+  runCores: 0,
+  runRelics: [],
   actionLog: [],
   inputLog: [], traceIncomplete: false, traceTruncationReason: null, simFrame: 0, replayActive: false, replayData: null,
   practiceSeed: null,
@@ -411,6 +413,8 @@ function resetGame(testSeed = null) {
   state.arrowAngle = 0;
   state.aimAngle = 0;
   state.score = 0;
+  state.runCores = 0;
+  state.runRelics = [];
   state.actionLog = []; state.inputLog = []; state.traceCheckpoints = []; state.traceIncomplete=false;state.traceTruncationReason=null;state.simFrame=0;state.replayActive=false;state.replayData=null;
   if (typeof ReplayLab !== 'undefined') ReplayLab.resetRecording();
   state.milestoneIndex = 0;
@@ -462,6 +466,7 @@ function showToast(msg) {
 
 function checkRelicUnlock(level) {
   const relic = RELIC_DATA.find(r => r.reqLvl === level);
+  if (relic && !state.runRelics.includes(relic.id)) state.runRelics.push(relic.id);
   if (state.practiceSeed !== null) return;
   if (relic && !state.unlockedRelics.includes(relic.id)) {
     state.unlockedRelics.push(relic.id);
@@ -660,6 +665,7 @@ function detonateLaneBomb(bombSlotIndex, impactX, impactY) {
 }
 
 function detonateCenterFigure(projLevel) {
+  state.runCores++;
   startCoreFX();
   if (state.practiceSeed === null) {
     state.coresDetonated++;
