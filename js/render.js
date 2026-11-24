@@ -156,32 +156,34 @@ function drawMetalRing(radius,color){
  ctx.beginPath();ctx.arc(0,0,radius*.79,0,Math.PI*2);ctx.lineWidth=1;ctx.strokeStyle=color;ctx.stroke();
  ctx.strokeStyle='#fff2bd';ctx.lineWidth=1.5;for(let j=0;j<4;j++){const a=j*Math.PI/2+.3;ctx.beginPath();ctx.arc(0,0,radius*.94,a,a+.35);ctx.stroke();}
 }
-// CORE-001: dedicated art for the materialized target. Collision geometry stays in the simulation.
-const tetsuCoreSprite = AssetHealth.image('assets/objects/nucleo-berkan.webp');
-const tetsuCoreReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-function drawTetsuCore() {
-  if (!tetsuCoreSprite.complete || !tetsuCoreSprite.naturalWidth) return false;
-  const reduced = tetsuCoreReducedMotion.matches;
-  const breath = reduced ? 1 : 1 + Math.sin(state.tick * .065) * .035;
-  const r = coreTargetRadius * Math.min(1.28, state.coreScaleAnim) * breath;
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.save();
-  ctx.rotate(reduced ? 0 : state.tick * .006);
-  ctx.drawImage(tetsuCoreSprite, -r, -r, r * 2, r * 2);
-  ctx.restore();
-  // Keep the target level upright against the bright crystal.
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = `900 ${Math.max(14, Math.round(coreTargetRadius * .52))}px ${THEME.font}`;
-  ctx.lineJoin = 'round';
-  ctx.strokeStyle = '#071125';
-  ctx.lineWidth = 4;
-  ctx.strokeText(String(state.centerLevel), 0, 0);
-  ctx.fillStyle = '#fff9dc';
-  ctx.fillText(String(state.centerLevel), 0, 0);
-  ctx.restore();
-  return true;
+const makiwaraSprites = ['base', 'resonante', 'elemental'].map(stage =>
+  AssetHealth.image(`assets/objects/makiwara-${stage}.webp`)
+);
+function drawMakiwara() {
+  const elemental = state.centerLevel !== null;
+  const stage = elemental ? 2 : Number(state.milestoneIndex >= 1);
+  const sprite = makiwaraSprites[stage];
+  if (!sprite.complete || !sprite.naturalWidth) return;
+
+  const pulse = REDUCED_MOTION ? 1 : 1 + Math.sin(state.tick * .09) * .07;
+  const height = coreTargetRadius * 2.15 * Math.min(1.25, state.coreScaleAnim) * pulse;
+  const width = height * sprite.naturalWidth / sprite.naturalHeight;
+  if (elemental) {
+    ctx.shadowColor = '#55edff';
+    ctx.shadowBlur = 12 * pulse;
+  }
+  ctx.drawImage(sprite, -width / 2, -height * .36, width, height);
+  ctx.shadowBlur = 0;
+  if (elemental) {
+    ctx.font = `900 ${Math.max(11, Math.round(coreTargetRadius * .50))}px ${THEME.font}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.strokeStyle = '#071125';
+    ctx.lineWidth = 3;
+    ctx.strokeText(String(state.centerLevel), 0, 0);
+    ctx.fillStyle = '#fff9dc';
+    ctx.fillText(String(state.centerLevel), 0, 0);
+  }
 }
 
 function drawBerkanCenter() {
@@ -230,32 +232,7 @@ function drawBerkanCenter() {
 
   ctx.scale(breath, breath);
 
-  if (state.centerLevel !== null) {
-    ctx.restore();
-    if (!drawTetsuCore()) drawPiece(cx, cy, coreTargetRadius, { level: state.centerLevel, kind: 'normal', fruit: null }, 0, state.coreScaleAnim, THEME.gold);
-    return;
-  }
-
-  ctx.shadowColor = state.combo > 1 ? THEME.gold : THEME.cyan;
-  ctx.shadowBlur = 22;
-  ctx.beginPath();
-  ctx.arc(0, 0, coreTargetRadius * 0.72, -Math.PI * 0.75, Math.PI * 1.2);
-  ctx.strokeStyle = state.combo > 1 ? THEME.gold : THEME.cyan;
-  ctx.lineWidth = 4;
-  ctx.lineCap = 'round';
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-
-  ctx.beginPath();
-  ctx.arc(0, 0, 7, 0, Math.PI * 2);
-  ctx.fillStyle = state.combo > 1 ? THEME.gold : THEME.sakura;
-  ctx.fill();
-
-  ctx.fillStyle = '#ffffff';
-  ctx.font = `900 8.5px ${THEME.font}`;
-  ctx.textAlign = 'center';
-  ctx.fillText('BERKAN', 0, coreTargetRadius * 0.44);
-
+  drawMakiwara();
   ctx.restore();
 }
 
@@ -549,6 +526,14 @@ function drawDirectionalReticle(x,y,color,piece,active){
   drawPrediction(x,y,color,piece);
   ctx.save();ctx.translate(x,y);ctx.strokeStyle=color;ctx.lineWidth=2;
   const r=slotRadius*1.45+8;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();
+  if (!state.replayActive && aimStartedAt !== null) {
+    const remaining = Math.max(0, 1 - (state.simFrame - aimStartedAt) / AIM_LIMIT_STEPS);
+    ctx.strokeStyle = remaining <= .25 ? '#ff657a' : '#ffdc92';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, 0, r + 5, -Math.PI / 2, -Math.PI / 2 + remaining * Math.PI * 2);
+    ctx.stroke();
+  }
   ctx.rotate(state.aimAngle);ctx.fillStyle='#ffcf73';ctx.beginPath();ctx.moveTo(0,-r-12);ctx.lineTo(-5,-r-2);ctx.lineTo(5,-r-2);ctx.closePath();ctx.fill();ctx.restore();
 }
 

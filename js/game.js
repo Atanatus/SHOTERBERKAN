@@ -1,3 +1,5 @@
+const AIM_LIMIT_STEPS = 240;
+let aimStartedAt = null;
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 // Preview-only: user-controlled URL flags NEVER authorize ranked runs or XP.
@@ -413,7 +415,7 @@ function resetGame(testSeed = null, officialRun = null) {
   const practiceIndicator = document.getElementById('practiceIndicator');
   if (practiceIndicator) practiceIndicator.hidden = state.practiceSeed === null;
   astralBursts.length=0; lanePulses.length=0; resetImpactFX();
-  runSerial++; state.chain=null; state.superCooldown=0; state.shotCount=0; state.lastSuperShot=-1; state.bestCombo=0; state.isAiming=false; pointerId=null; keyState.left=keyState.right=false;
+  runSerial++; state.chain=null; state.superCooldown=0; state.shotCount=0; state.lastSuperShot=-1; state.bestCombo=0; clearInput();
   clearTimeout(showToast._timer); document.getElementById("toast").classList.remove("show");
   state.seed = officialRun?.seed ?? state.practiceSeed ?? (Math.floor(Math.random() * 2147483647) || 1337);
   state.rng = createPRNG(state.seed);
@@ -561,15 +563,32 @@ function isPointInSwapBox(px, py) {
 function mapPointerToGame(e){
   return FrutiDryViewport.pointerToLogical(e.clientX,e.clientY,canvas.getBoundingClientRect(),width,height);
 }
-function clearInput(){state.isAiming=false;keyState.left=keyState.right=false; if(pointerId!==null){if(canvas.hasPointerCapture(pointerId))canvas.releasePointerCapture(pointerId);pointerId=null;}}
+function clearInput() {
+  state.isAiming = false;
+  aimStartedAt = null;
+  keyState.left = keyState.right = false;
+  const capturedPointer = pointerId;
+  pointerId = null;
+  if (capturedPointer !== null && canvas.hasPointerCapture(capturedPointer)) {
+    canvas.releasePointerCapture(capturedPointer);
+  }
+}
+function startAiming() {
+  state.isAiming = true;
+  aimStartedAt = state.simFrame;
+}
+function finishAiming() {
+  clearInput();
+  shoot();
+}
 canvas.addEventListener('pointerdown',e=>{
-  if(state.replayActive||paused||state.gameOver||state.projectile||state.chain||pointerId!==null||e.button!==0)return;
+  if(state.replayActive||paused||state.gameOver||state.projectile||state.chain||state.isAiming||e.button!==0)return;
   e.preventDefault();const {x,y}=mapPointerToGame(e);
   if(isPointInSwapBox(x,y)){swapActiveAndUpcoming();return;}
-  pointerId=e.pointerId;canvas.setPointerCapture(pointerId);updateAimFromPointer(x,y);state.isAiming=true;
+  pointerId=e.pointerId;canvas.setPointerCapture(pointerId);updateAimFromPointer(x,y);startAiming();
 });
 canvas.addEventListener('pointermove',e=>{if(state.replayActive||e.pointerId!==pointerId||!state.isAiming)return;const {x,y}=mapPointerToGame(e);updateAimFromPointer(x,y);});
-canvas.addEventListener('pointerup',e=>{if(state.replayActive||e.pointerId!==pointerId)return;e.preventDefault();const {x,y}=mapPointerToGame(e);updateAimFromPointer(x,y);clearInput();shoot();});
+canvas.addEventListener('pointerup',e=>{if(state.replayActive||e.pointerId!==pointerId)return;e.preventDefault();const {x,y}=mapPointerToGame(e);updateAimFromPointer(x,y);finishAiming();});
 canvas.addEventListener('pointercancel',clearInput);canvas.addEventListener('lostpointercapture',e=>{if(e.pointerId===pointerId)clearInput();});
 window.addEventListener('blur',clearInput);document.addEventListener('visibilitychange',clearInput);
 window.addEventListener('keydown',e=>{
@@ -581,13 +600,13 @@ window.addEventListener('keydown',e=>{
  if(['ArrowLeft','KeyA'].includes(e.code))keyState.left=true;
  if(['ArrowRight','KeyD'].includes(e.code))keyState.right=true;
  if(['KeyC','ShiftLeft','ShiftRight'].includes(e.code)&&!e.repeat)swapActiveAndUpcoming();
- if(e.code==='Space'&&!e.repeat&&!state.projectile&&!state.chain)state.isAiming=true;
+ if(e.code==='Space'&&!e.repeat&&!state.projectile&&!state.chain&&!state.isAiming)startAiming();
 });
 window.addEventListener('keyup',e=>{
  if(state.replayActive)return;
  if(['ArrowLeft','KeyA'].includes(e.code))keyState.left=false;
  if(['ArrowRight','KeyD'].includes(e.code))keyState.right=false;
- if(e.code==='Space'&&state.isAiming&&pointerId===null){e.preventDefault();state.isAiming=false;shoot();}
+ if(e.code==='Space'&&state.isAiming&&pointerId===null){e.preventDefault();finishAiming();}
 });
 
 function shoot() {
@@ -941,8 +960,9 @@ function advanceProjectile(p,phase){
 function drawPrediction(x,y,color,piece){
  const p={x,y,vx:Math.sin(state.aimAngle)*projectileSpeed(),vy:-Math.cos(state.aimAngle)*projectileSpeed()};
  let phase=state.trackPhase,tempo=state.tempoMult,timer=state.tempoTimer,hit=null;
- ctx.save();ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.globalAlpha=.66;ctx.setLineDash([3,7]);ctx.beginPath();ctx.moveTo(x,y);
+ ctx.save();ctx.strokeStyle=color;ctx.lineWidth=2.8;ctx.globalAlpha=.94;ctx.setLineDash([7,5]);ctx.beginPath();ctx.moveTo(x,y);
  for(let i=0;i<150;i++){if(timer>0&&--timer===0)tempo=1;phase=(phase+state.routeParams.speed*tempo+1)%1;hit=advanceProjectile(p,phase);ctx.lineTo(p.x,p.y);if(hit)break;}
+ ctx.save();ctx.strokeStyle='#071327';ctx.lineWidth=5.5;ctx.stroke();ctx.restore();
  ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
  if(hit){const target=hit.type==='slot'?state.slots[hit.index]:null;const safe=piece.kind==='heal'||hit.type==='core'||(hit.type==='slot'&&(!target||(!target.isSkull&&(target.isBomb||target.isSuperballNode||piece.kind!=='normal'&&piece.kind!=='fruit'||arePiecesEqualForMerge(target,piece)))));ctx.strokeStyle=safe?'#7bf0a4':'#ff546b';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,7,0,Math.PI*2);ctx.stroke();}
  ctx.restore();
@@ -950,6 +970,10 @@ function drawPrediction(x,y,color,piece){
 
 function update() {
   if(paused || document.hidden || state.gameOver) return;
+  // Dispatch at the same simulation boundary as a manually released shot.
+  if (!state.replayActive && aimStartedAt !== null && state.simFrame - aimStartedAt >= AIM_LIMIT_STEPS) {
+    finishAiming();
+  }
   if(typeof ReplayLab!=='undefined' && ReplayLab.beforeStep()===false)return;
   state.simFrame++;
   if (state.hitStop > 0) {

@@ -472,6 +472,30 @@
         256
       ],
       "sha256": "828bef1da814feea22f1185e10c584bc5be80cc44d58713c99ef23d2330c6972"
+    },
+    "objects/makiwara-base.webp": {
+      "bytes": 12126,
+      "size": [
+        121,
+        280
+      ],
+      "sha256": "465597a11eb70baae8f76228f8ab7ce2295cf2d823262f719361053650fea419"
+    },
+    "objects/makiwara-elemental.webp": {
+      "bytes": 23576,
+      "size": [
+        126,
+        280
+      ],
+      "sha256": "681ab88e5b4af24d7510c63c4661314ed5fbc9c871e622e50d00d266552082e5"
+    },
+    "objects/makiwara-resonante.webp": {
+      "bytes": 14154,
+      "size": [
+        126,
+        280
+      ],
+      "sha256": "b0f4a0532e6e4a6959a215182b6c0b373b4f4f44626b12bb4c3a0a380db32bf7"
     }
   }
 }
