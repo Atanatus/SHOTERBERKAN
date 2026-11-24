@@ -114,13 +114,33 @@ function drawRoadwayLane(laneIndex,env){
       }
     }
   }
-  ctx.globalAlpha=.88;
-  for(const u of [0,1]){
-    const p=evalLaneAt(u,laneIndex);ctx.beginPath();ctx.arc(p.x,p.y,t*.53,0,Math.PI*2);ctx.fillStyle='#071525';ctx.fill();ctx.lineWidth=1.5;ctx.strokeStyle=color;ctx.stroke();
-    ctx.beginPath();ctx.arc(p.x,p.y,t*.17,0,Math.PI*2);ctx.fillStyle='#e6fbff';ctx.fill();
+  ctx.restore();
+}
+
+const bambooGateSprite = AssetHealth.image('assets/nature/bambu-portal.webp');
+function drawBambooGates(laneCount, foreground) {
+  if (!bambooGateSprite.complete || !bambooGateSprite.naturalWidth) return;
+  const ratio = bambooGateSprite.naturalWidth / bambooGateSprite.naturalHeight;
+
+  ctx.save();
+  ctx.globalAlpha = foreground ? .96 : .82;
+  for (let lane = 0; lane < laneCount; lane++) {
+    for (const end of [0, 1]) {
+      const point = evalLaneAt(end, lane);
+      const outward = end === 0 ? -1 : 1;
+      const height = slotRadius * (foreground ? 1.72 : 2.35);
+      const width = height * ratio;
+      const offset = slotRadius * (foreground ? .47 : .87);
+      ctx.save();
+      ctx.translate(point.x + outward * offset, point.y + slotRadius * (foreground ? .68 : -.29));
+      ctx.scale(outward * (foreground ? -1 : 1), 1);
+      ctx.drawImage(bambooGateSprite, -width / 2, -height / 2, width, height);
+      ctx.restore();
+    }
   }
   ctx.restore();
 }
+
 function drawEmptySocket(pos,lane){
   const r=slotRadius,color=state.centerLevel!==null?THEME.gold:CONDUIT_COLORS[lane%3];
   ctx.save();ctx.translate(pos.x,pos.y);
@@ -156,25 +176,70 @@ function drawMetalRing(radius,color){
  ctx.beginPath();ctx.arc(0,0,radius*.79,0,Math.PI*2);ctx.lineWidth=1;ctx.strokeStyle=color;ctx.stroke();
  ctx.strokeStyle='#fff2bd';ctx.lineWidth=1.5;for(let j=0;j<4;j++){const a=j*Math.PI/2+.3;ctx.beginPath();ctx.arc(0,0,radius*.94,a,a+.35);ctx.stroke();}
 }
-const makiwaraSprites = ['base', 'resonante', 'elemental'].map(stage =>
-  AssetHealth.image(`assets/objects/makiwara-${stage}.webp`)
-);
+const MAKIWARA_STAGES = [
+  {name: 'base', combo: 0, color: '#ffd091'},
+  {name: 'jade', combo: 2, color: '#a1f998'},
+  {name: 'resonante', combo: 4, color: '#dd9dff'},
+  {name: 'ascua', combo: 6, color: '#ff925c'},
+  {name: 'elemental', combo: 8, color: '#63edff'}
+].map(stage => ({
+  ...stage,
+  sprite: AssetHealth.image(`assets/objects/makiwara-${stage.name}.webp`)
+}));
+
+function drawMakiwaraClock(combo, stage, nextStage) {
+  const radius = coreTargetRadius * 1.24;
+  const marks = MAKIWARA_STAGES.at(-1).combo;
+  ctx.save();
+  ctx.lineCap = 'round';
+  for (let i = 0; i < marks; i++) {
+    const angle = -Math.PI / 2 + i * Math.PI * 2 / marks;
+    const x = Math.cos(angle);
+    const y = Math.sin(angle);
+    ctx.beginPath();
+    ctx.moveTo(x * radius, y * radius);
+    ctx.lineTo(x * (radius + 5), y * (radius + 5));
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#071125';
+    ctx.stroke();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = i < combo ? stage.color : '#687687';
+    ctx.stroke();
+  }
+  if (nextStage) {
+    ctx.font = `900 ${Math.max(9, Math.round(coreTargetRadius * .32))}px ${THEME.font}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.strokeStyle = '#071125';
+    ctx.lineWidth = 3;
+    const label = `×${combo} / ×${nextStage.combo}`;
+    ctx.strokeText(label, 0, -radius - 8);
+    ctx.fillStyle = '#ffefd3';
+    ctx.fillText(label, 0, -radius - 8);
+  }
+  ctx.restore();
+}
+
 function drawMakiwara() {
-  const elemental = state.centerLevel !== null;
-  const stage = elemental ? 2 : Number(state.milestoneIndex >= 1);
-  const sprite = makiwaraSprites[stage];
+  const combo = state.bestCombo;
+  const stageIndex = MAKIWARA_STAGES.findLastIndex(stage => combo >= stage.combo);
+  const stage = MAKIWARA_STAGES[stageIndex];
+  const coreActive = state.centerLevel !== null;
+  const elemental = stageIndex === MAKIWARA_STAGES.length - 1;
+  const {sprite} = stage;
+  drawMakiwaraClock(combo, stage, MAKIWARA_STAGES[stageIndex + 1]);
   if (!sprite.complete || !sprite.naturalWidth) return;
 
   const pulse = REDUCED_MOTION ? 1 : 1 + Math.sin(state.tick * .09) * .07;
   const height = coreTargetRadius * 2.15 * Math.min(1.25, state.coreScaleAnim) * pulse;
   const width = height * sprite.naturalWidth / sprite.naturalHeight;
-  if (elemental) {
-    ctx.shadowColor = '#55edff';
+  if (elemental || coreActive) {
+    ctx.shadowColor = elemental ? stage.color : THEME.gold;
     ctx.shadowBlur = 12 * pulse;
   }
   ctx.drawImage(sprite, -width / 2, -height * .36, width, height);
   ctx.shadowBlur = 0;
-  if (elemental) {
+  if (coreActive) {
     ctx.font = `900 ${Math.max(11, Math.round(coreTargetRadius * .50))}px ${THEME.font}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -187,51 +252,8 @@ function drawMakiwara() {
 }
 
 function drawBerkanCenter() {
-  const breath = 1 + Math.sin(state.tick * 0.055) * 0.045 + state.corePulseBoost * 0.16;
-  const maxTunnelR = Math.min(width, height) * 0.42;
-  const minTunnelR = coreTargetRadius * 0.94;
-
   ctx.save();
   ctx.translate(cx, cy);
-
-  const numSpokes = 16;
-  const spokeCycle = (state.tick * 0.015 * Math.max(0.4, state.tempoMult)) % 1;
-  for (let i = 0; i < numSpokes; i++) {
-    const ang = (i * Math.PI * 2) / numSpokes;
-    const localProgress = (spokeCycle + i / numSpokes) % 1;
-    const rStart = minTunnelR + localProgress * (maxTunnelR - minTunnelR) * 0.35;
-    const rEnd = minTunnelR + Math.min(1, localProgress + 0.35) * (maxTunnelR - minTunnelR);
-    const alpha = Math.sin(localProgress * Math.PI) * 0.24;
-
-    ctx.beginPath();
-    ctx.moveTo(Math.cos(ang) * rStart, Math.sin(ang) * rStart * 0.78);
-    ctx.lineTo(Math.cos(ang) * rEnd, Math.sin(ang) * rEnd * 0.78);
-    ctx.strokeStyle = state.centerLevel !== null
-      ? `rgba(255, 208, 0, ${alpha * 1.4})`
-      : `rgba(0, 245, 255, ${alpha})`;
-    ctx.lineWidth = 1.6;
-    ctx.stroke();
-  }
-
-  const numRings = 3;
-  for (let rIdx = 0; rIdx < numRings; rIdx++) {
-    const p = ((state.tick * 0.012 * Math.max(0.4, state.tempoMult)) + rIdx / numRings) % 1;
-    const eased = Math.pow(p, 1.35);
-    const rx = minTunnelR + eased * (maxTunnelR - minTunnelR);
-    const ry = rx * 0.76;
-    const ringAlpha = (1 - eased) * 0.34;
-
-    ctx.beginPath();
-    ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = state.centerLevel !== null
-      ? `rgba(255, 208, 0, ${ringAlpha * 1.45})`
-      : `rgba(255, 30, 110, ${ringAlpha})`;
-    ctx.lineWidth = 1.5 + eased * 1.4;
-    ctx.stroke();
-  }
-
-  ctx.scale(breath, breath);
-
   drawMakiwara();
   ctx.restore();
 }
@@ -581,6 +603,7 @@ function draw() {
   for (let l = 0; l < laneCount; l++) {
     drawRoadwayLane(l, env);
   }
+  drawBambooGates(laneCount, false);
   if (perf.visible) markRenderStage('conduits');
 
   drawAstralFX();
@@ -607,6 +630,8 @@ function draw() {
       drawAnimatedBoardPiece(i,pos,slot);
     }
   }
+
+  drawBambooGates(laneCount, true);
 
   if (state.projectile) {
     const p=state.projectile;

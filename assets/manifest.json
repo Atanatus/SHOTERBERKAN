@@ -496,6 +496,30 @@
         280
       ],
       "sha256": "b0f4a0532e6e4a6959a215182b6c0b373b4f4f44626b12bb4c3a0a380db32bf7"
+    },
+    "objects/makiwara-jade.webp": {
+      "bytes": 16942,
+      "size": [
+        125,
+        280
+      ],
+      "sha256": "5535367d2bf0ba86f101fa5edb980184479dbee2aa4d36501b501b9f55c3aa80"
+    },
+    "objects/makiwara-ascua.webp": {
+      "bytes": 17176,
+      "size": [
+        125,
+        280
+      ],
+      "sha256": "2cc2bfb2bdc516fc420130c821e59f613e88a17a2e436d4cad2f13210c0ab4fb"
+    },
+    "nature/bambu-portal.webp": {
+      "bytes": 9588,
+      "size": [
+        104,
+        180
+      ],
+      "sha256": "734cf5a93dd4909e9d726c031f231e49a664b07ff2cc544b8331730759c0328e"
     }
   }
 }
