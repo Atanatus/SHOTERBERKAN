@@ -188,35 +188,56 @@ const MAKIWARA_STAGES = [
 }));
 
 function drawMakiwaraClock(combo, stage, nextStage) {
-  const radius = coreTargetRadius * 1.24;
-  const marks = MAKIWARA_STAGES.at(-1).combo;
+  const radius = Math.max(27, coreTargetRadius * 1.36);
+  const marksPerCombo = 3;
+  const marks = MAKIWARA_STAGES.at(-1).combo * marksPerCombo;
+  const filled = Math.min(marks, combo * marksPerCombo);
+
   ctx.save();
+  ctx.beginPath();
+  ctx.arc(0, 0, radius + 4, 0, Math.PI * 2);
+  ctx.strokeStyle = '#060d1bef';
+  ctx.lineWidth = 15;
+  ctx.stroke();
+  ctx.strokeStyle = '#677b97';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  if (filled > 0) {
+    ctx.beginPath();
+    ctx.arc(0, 0, radius - 3, -Math.PI / 2, -Math.PI / 2 + filled / marks * Math.PI * 2);
+    ctx.strokeStyle = stage.color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
   ctx.lineCap = 'round';
   for (let i = 0; i < marks; i++) {
     const angle = -Math.PI / 2 + i * Math.PI * 2 / marks;
     const x = Math.cos(angle);
     const y = Math.sin(angle);
+    const major = (i + 1) % marksPerCombo === 0;
+    const end = radius + (major ? 9 : 6);
     ctx.beginPath();
     ctx.moveTo(x * radius, y * radius);
-    ctx.lineTo(x * (radius + 5), y * (radius + 5));
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = '#071125';
-    ctx.stroke();
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = i < combo ? stage.color : '#687687';
+    ctx.lineTo(x * end, y * end);
+    ctx.lineWidth = major ? 3 : 1.8;
+    ctx.strokeStyle = i < filled ? stage.color : major ? '#c0d1e4' : '#677b97';
     ctx.stroke();
   }
-  if (nextStage) {
-    ctx.font = `900 ${Math.max(9, Math.round(coreTargetRadius * .32))}px ${THEME.font}`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    ctx.strokeStyle = '#071125';
-    ctx.lineWidth = 3;
-    const label = `×${combo} / ×${nextStage.combo}`;
-    ctx.strokeText(label, 0, -radius - 8);
-    ctx.fillStyle = '#ffefd3';
-    ctx.fillText(label, 0, -radius - 8);
-  }
+
+  const label = nextStage ? `COMBO ×${combo} / ×${nextStage.combo}` : 'ELEMENTAL';
+  const fontSize = Math.max(11, Math.round(coreTargetRadius * .40));
+  ctx.font = `900 ${fontSize}px ${THEME.font}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const labelWidth = ctx.measureText(label).width + 18;
+  const labelY = -radius - fontSize - 12;
+  ctx.fillStyle = '#060d1b';
+  ctx.fillRect(-labelWidth / 2, labelY - fontSize / 2 - 4, labelWidth, fontSize + 8);
+  ctx.fillStyle = stage.color;
+  ctx.fillRect(-labelWidth / 2, labelY + fontSize / 2 + 3, labelWidth, 1);
+  ctx.fillStyle = '#f7fbff';
+  ctx.fillText(label, 0, labelY);
   ctx.restore();
 }
 
